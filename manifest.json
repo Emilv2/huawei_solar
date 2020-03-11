@@ -1,0 +1,8 @@
+{
+  "domain": "huawei_solar",
+  "name": "huawei_solar",
+  "documentation": "",
+  "dependencies": [],
+  "codeowners": ["Emilv2"],
+  "requirements": ["huawei-solar==0.0.3"]
+}
