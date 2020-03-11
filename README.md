@@ -5,6 +5,9 @@ This code is a custom component to read the data from Huawei inverters
 
 Copy these files to custom_components/huawei_solar/
 
+You can try the async component by renaming sensor_async.py sensor.py,
+but this seems to be currently broken with HA 105, pymodbus 2.3.0 and python 3.7.
+
 Then configure the sensors by setting up the stib platform in `configuration.yaml`.
 
 ## Options
