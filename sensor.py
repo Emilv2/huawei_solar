@@ -3,17 +3,8 @@ import logging
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from huawei_solar import HuaweiSolar
 import homeassistant.helpers.config_validation as cv
-from homeassistant.const import CONF_NAME, CONF_HOST
+from homeassistant.const import CONF_HOST, POWER_WATT
 from homeassistant.helpers.entity import Entity
-from homeassistant.const import (
-    CONF_IP_ADDRESS,
-    CONF_NAME,
-    ENERGY_KILO_WATT_HOUR,
-    POWER_WATT,
-    TEMP_CELSIUS,
-    TEMP_FAHRENHEIT,
-)
-
 
 _LOGGER = logging.getLogger(__name__)
 
