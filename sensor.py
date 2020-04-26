@@ -34,6 +34,15 @@ ATTR_EFFICIENCY = "efficiency"
 ATTR_GRID_FREQUENCY = "grid_frequency"
 ATTR_GRID_VOLTAGE = "grid_voltage"
 ATTR_GRID_CURRENT = "grid_current"
+ATTR_LINE_VOLTAGE_A_B = "line_voltage_A_B"
+ATTR_LINE_VOLTAGE_B_C = "line_voltage_B_C"
+ATTR_LINE_VOLTAGE_C_A = "line_voltage_C_A"
+ATTR_PHASE_A_VOLTAGE = "phase_A_voltage"
+ATTR_PHASE_B_VOLTAGE = "phase_B_voltage"
+ATTR_PHASE_C_VOLTAGE = "phase_C_voltage"
+ATTR_PHASE_A_CURRENT = "phase_A_current"
+ATTR_PHASE_B_CURRENT = "phase_B_current"
+ATTR_PHASE_C_CURRENT = "phase_C_current"
 ATTR_STARTUP_TIME = "startup_time"
 ATTR_SHUTDOWN_TIME = "shutdown_time"
 ATTR_INTERNAL_TEMPERATURE = "internal_temperature"
@@ -77,7 +86,10 @@ class HuaweiSolarSensor(Entity):
         self._pv_strings_voltage = [None] * self._nb_pv_strings
         self._pv_strings_current = [None] * self._nb_pv_strings
         self._rated_power = self._inverter.get("rated_power").value
-        self._nb_optimizers = self._inverter.get("nb_optimizers").value
+        try:
+            self._nb_optimizers = self._inverter.get("nb_optimizers").value
+        except HuaweiSolar.ReadException:
+            self._nb_optimizers = None
         tmp = self._inverter.get("grid_code").value
         self._grid_standard = tmp.standard
         self._grid_country = tmp.country
@@ -107,13 +119,22 @@ class HuaweiSolarSensor(Entity):
             ATTR_GRID_COUNTRY: self._grid_country,
             ATTR_DAILY_YIELD: self._daily_yield,
             ATTR_TOTAL_YIELD: self._total_yield,
+            ATTR_GRID_VOLTAGE: self._grid_voltage,
+            ATTR_GRID_CURRENT: self._grid_current,
+            ATTR_LINE_VOLTAGE_A_B: self._line_voltage_A_B,
+            ATTR_LINE_VOLTAGE_B_C: self._line_voltage_B_C,
+            ATTR_LINE_VOLTAGE_C_A: self._line_voltage_C_A,
+            ATTR_PHASE_A_VOLTAGE: self._phase_A_voltage,
+            ATTR_PHASE_B_VOLTAGE: self._phase_B_voltage,
+            ATTR_PHASE_C_VOLTAGE: self._phase_C_voltage,
+            ATTR_PHASE_A_CURRENT: self._phase_A_current,
+            ATTR_PHASE_B_CURRENT: self._phase_B_current,
+            ATTR_PHASE_C_CURRENT: self._phase_C_current,
             ATTR_DAY_POWER_PEAK: self._day_active_power_peak,
             ATTR_REACTIVE_POWER: self._reactive_power,
             ATTR_POWER_FACTOR: self._power_factor,
             ATTR_EFFICIENCY: self._efficiency,
             ATTR_GRID_FREQUENCY: self._grid_frequency,
-            ATTR_GRID_VOLTAGE: self._grid_voltage,
-            ATTR_GRID_CURRENT: self._grid_current,
             ATTR_STARTUP_TIME: self._startup_time.isoformat(),
             ATTR_SHUTDOWN_TIME: self._shutdown_time.isoformat(),
             ATTR_INTERNAL_TEMPERATURE: self._internal_temperature,
@@ -122,9 +143,9 @@ class HuaweiSolarSensor(Entity):
             ATTR_NB_ONLINE_OPTIMIZERS: self._nb_online_optimizers,
             ATTR_SYSTEM_TIME: self._system_time,
         }
-        # for i in range(int(self._nb_pv_strings)):
-        #    attributes[f"pv_string_{i+1:02}_voltage"] = self._pv_strings_voltage[i]
-        #    attributes[f"pv_string_{i+1:02}_current"] = self._pv_strings_current[i]
+        for i in range(int(self._nb_pv_strings)):
+            attributes[f"pv_string_{i+1:02}_voltage"] = self._pv_strings_voltage[i]
+            attributes[f"pv_string_{i+1:02}_current"] = self._pv_strings_current[i]
         return attributes
 
     @property
@@ -138,15 +159,28 @@ class HuaweiSolarSensor(Entity):
         self._reactive_power = self._inverter.get("reactive_power").value
         self._power_factor = self._inverter.get("power_factor").value
         self._efficiency = self._inverter.get("efficiency").value
-        self._grid_voltage = self._inverter.get("grid_voltage").value
-        self._grid_current = self._inverter.get("grid_current").value
+        self._line_voltage_A_B = self._inverter.get("line_voltage_A_B").value
+        self._line_voltage_B_C = self._inverter.get("line_voltage_B_C").value
+        self._line_voltage_C_A = self._inverter.get("line_voltage_C_A").value
+        self._phase_A_voltage = self._inverter.get("phase_A_voltage").value
+        self._phase_B_voltage = self._inverter.get("phase_B_voltage").value
+        self._phase_C_voltage = self._inverter.get("phase_C_voltage").value
+        self._phase_A_current = self._inverter.get("phase_A_current").value
+        self._phase_B_current = self._inverter.get("phase_B_current").value
+        self._phase_C_current = self._inverter.get("phase_C_current").value
+        self._grid_voltage = self._line_voltage_A_B
+        self._grid_current = self._phase_A_current
         self._grid_frequency = self._inverter.get("grid_frequency").value
         self._startup_time = self._inverter.get("startup_time").value.time()
         self._shutdown_time = self._inverter.get("shutdown_time").value.time()
         self._system_time = self._inverter.get("system_time").value
         self._internal_temperature = self._inverter.get("internal_temperature").value
         self._device_status = self._inverter.get("device_status").value
-        self._nb_online_optimizers = self._inverter.get("nb_online_optimizers").value
+        if self._nb_optimizers:
+            self._nb_online_optimizers = self._inverter.get(
+                "nb_online_optimizers"
+            ).value
+
         self._day_active_power_peak = self._inverter.get("day_active_power_peak").value
         for i in range(int(self._nb_pv_strings)):
             self._pv_strings_voltage[i] = self._inverter.get(
