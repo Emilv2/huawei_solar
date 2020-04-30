@@ -34,6 +34,23 @@ ATTR_PHASE_C_VOLTAGE = "phase_C_voltage"
 ATTR_PHASE_A_CURRENT = "phase_A_current"
 ATTR_PHASE_B_CURRENT = "phase_B_current"
 ATTR_PHASE_C_CURRENT = "phase_C_current"
+ATTR_POWER_METER_ACTIVE_POWER = "power_meter_active_power"
+ATTR_GRID_A_VOLTAGE = "grid_A_voltage"
+ATTR_GRID_B_VOLTAGE = "grid_B_voltage"
+ATTR_GRID_C_VOLTAGE = "grid_C_voltage"
+ATTR_ACTIVE_GRID_A_CURRENT = "active_grid_A_current"
+ATTR_ACTIVE_GRID_B_CURRENT = "active_grid_B_current"
+ATTR_ACTIVE_GRID_C_CURRENT = "active_grid_C_current"
+ATTR_ACTIVE_GRID_POWER_FACTOR = "active_grid_power_factor"
+ATTR_ACTIVE_GRID_FREQUENCY = "active_grid_frequency"
+ATTR_GRID_EXPORTED_ENERGY = "grid_exporterd_energy"
+ATTR_GRID_ACCUMULATED_ENERGY = "grid_accumulated_energy"
+ATTR_ACTIVE_GRID_A_B_VOLTAGE = "active_grid_A_B_voltage"
+ATTR_ACTIVE_GRID_B_C_VOLTAGE = "active_grid_B_C_voltage"
+ATTR_ACTIVE_GRID_C_A_VOLTAGE = "active_grid_C_A_voltage"
+ATTR_ACTIVE_GRID_A_POWER = "active_grid_A_power"
+ATTR_ACTIVE_GRID_B_POWER = "active_grid_B_power"
+ATTR_ACTIVE_GRID_C_POWER = "active_grid_C_power"
 ATTR_STARTUP_TIME = "startup_time"
 ATTR_SHUTDOWN_TIME = "shutdown_time"
 ATTR_INTERNAL_TEMPERATURE = "internal_temperature"
@@ -126,6 +143,23 @@ class HuaweiSolarSensor(Entity):
             ATTR_POWER_FACTOR: self._power_factor,
             ATTR_EFFICIENCY: self._efficiency,
             ATTR_GRID_FREQUENCY: self._grid_frequency,
+            ATTR_POWER_METER_ACTIVE_POWER: self._power_meter_active_power,
+            ATTR_GRID_A_VOLTAGE: self._grid_A_voltage,
+            ATTR_GRID_B_VOLTAGE: self._grid_B_voltage,
+            ATTR_GRID_C_VOLTAGE: self._grid_C_voltage,
+            ATTR_ACTIVE_GRID_A_CURRENT: self._active_grid_A_current,
+            ATTR_ACTIVE_GRID_B_CURRENT: self._active_grid_B_current,
+            ATTR_ACTIVE_GRID_C_CURRENT: self._active_grid_C_current,
+            ATTR_ACTIVE_GRID_POWER_FACTOR: self._active_grid_power_factor,
+            ATTR_ACTIVE_GRID_FREQUENCY: self._active_grid_frequency,
+            ATTR_GRID_EXPORTED_ENERGY: self._grid_exporterd_energy,
+            ATTR_GRID_ACCUMULATED_ENERGY: self._grid_accumulated_energy,
+            ATTR_ACTIVE_GRID_A_B_VOLTAGE: self._active_grid_A_B_voltage,
+            ATTR_ACTIVE_GRID_B_C_VOLTAGE: self._active_grid_B_C_voltage,
+            ATTR_ACTIVE_GRID_C_A_VOLTAGE: self._active_grid_C_A_voltage,
+            ATTR_ACTIVE_GRID_A_POWER: self._active_grid_A_power,
+            ATTR_ACTIVE_GRID_B_POWER: self._active_grid_B_power,
+            ATTR_ACTIVE_GRID_C_POWER: self._active_grid_C_power,
             ATTR_STARTUP_TIME: self._startup_time.isoformat(),
             ATTR_SHUTDOWN_TIME: self._shutdown_time.isoformat(),
             ATTR_INTERNAL_TEMPERATURE: self._internal_temperature,
@@ -162,6 +196,23 @@ class HuaweiSolarSensor(Entity):
         self._grid_voltage = self._line_voltage_A_B
         self._grid_current = self._phase_A_current
         self._grid_frequency = self._inverter.get("grid_frequency").value
+        self._power_meter_active_power = self._inverter.get("power_meter_active_power").value
+        self._grid_A_voltage = self._inverter.get("grid_A_voltage").value
+        self._grid_B_voltage = self._inverter.get("grid_B_voltage").value
+        self._grid_C_voltage = self._inverter.get("grid_C_voltage").value
+        self._active_grid_A_current = self._inverter.get("active_grid_A_current").value
+        self._active_grid_B_current = self._inverter.get("active_grid_B_current").value
+        self._active_grid_C_current = self._inverter.get("active_grid_C_current").value
+        self._active_grid_power_factor = self._inverter.get("active_grid_power_factor").value
+        self._active_grid_frequency = self._inverter.get("active_grid_frequency").value
+        self._grid_exporterd_energy = self._inverter.get("grid_exporterd_energy").value
+        self._grid_accumulated_energy = self._inverter.get("grid_accumulated_energy").value
+        self._active_grid_A_B_voltage = self._inverter.get("active_grid_A_B_voltage").value
+        self._active_grid_B_C_voltage = self._inverter.get("active_grid_B_C_voltage").value
+        self._active_grid_C_A_voltage = self._inverter.get("active_grid_C_A_voltage").value
+        self._active_grid_A_power = self._inverter.get("active_grid_A_power").value
+        self._active_grid_B_power = self._inverter.get("active_grid_B_power").value
+        self._active_grid_C_power = self._inverter.get("active_grid_C_power").value
         self._startup_time = self._inverter.get("startup_time").value.time()
         self._shutdown_time = self._inverter.get("shutdown_time").value.time()
         self._system_time = self._inverter.get("system_time").value
