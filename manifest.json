@@ -4,5 +4,5 @@
   "documentation": "",
   "dependencies": [],
   "codeowners": ["Emilv2"],
-  "requirements": ["huawei-solar==0.0.6"]
+  "requirements": ["huawei-solar==0.0.7"]
 }
