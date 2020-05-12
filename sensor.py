@@ -1,7 +1,7 @@
 import voluptuous as vol
 import logging
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from huawei_solar import HuaweiSolar
+from huawei_solar import HuaweiSolar, ReadException
 import homeassistant.helpers.config_validation as cv
 from homeassistant.const import CONF_HOST, POWER_WATT
 from homeassistant.helpers.entity import Entity
@@ -96,7 +96,7 @@ class HuaweiSolarSensor(Entity):
         self._rated_power = self._inverter.get("rated_power").value
         try:
             self._nb_optimizers = self._inverter.get("nb_optimizers").value
-        except HuaweiSolar.ReadException:
+        except ReadException:
             self._nb_optimizers = None
         tmp = self._inverter.get("grid_code").value
         self._grid_standard = tmp.standard
