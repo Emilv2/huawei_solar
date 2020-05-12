@@ -165,12 +165,13 @@ class HuaweiSolarSensor(Entity):
             ATTR_INTERNAL_TEMPERATURE: self._internal_temperature,
             ATTR_DEVICE_STATUS: self._device_status,
             ATTR_NB_OPTIMIZERS: self._nb_optimizers,
-            ATTR_NB_ONLINE_OPTIMIZERS: self._nb_online_optimizers,
             ATTR_SYSTEM_TIME: self._system_time,
         }
         for i in range(int(self._nb_pv_strings)):
             attributes[f"pv_string_{i+1:02}_voltage"] = self._pv_strings_voltage[i]
             attributes[f"pv_string_{i+1:02}_current"] = self._pv_strings_current[i]
+        if self._nb_optimizers:
+            attributes[ATTR_NB_ONLINE_OPTIMIZERS] = self._nb_online_optimizers
         return attributes
 
     @property
