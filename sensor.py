@@ -35,6 +35,7 @@ ATTR_PHASE_A_CURRENT = "phase_A_current"
 ATTR_PHASE_B_CURRENT = "phase_B_current"
 ATTR_PHASE_C_CURRENT = "phase_C_current"
 ATTR_POWER_METER_ACTIVE_POWER = "power_meter_active_power"
+ATTR_INPUT_POWER = "input_power"
 ATTR_GRID_A_VOLTAGE = "grid_A_voltage"
 ATTR_GRID_B_VOLTAGE = "grid_B_voltage"
 ATTR_GRID_C_VOLTAGE = "grid_C_voltage"
@@ -144,6 +145,7 @@ class HuaweiSolarSensor(Entity):
             ATTR_EFFICIENCY: self._efficiency,
             ATTR_GRID_FREQUENCY: self._grid_frequency,
             ATTR_POWER_METER_ACTIVE_POWER: self._power_meter_active_power,
+            ATTR_INPUT_POWER: self.input_power,
             ATTR_GRID_A_VOLTAGE: self._grid_A_voltage,
             ATTR_GRID_B_VOLTAGE: self._grid_B_voltage,
             ATTR_GRID_C_VOLTAGE: self._grid_C_voltage,
@@ -198,6 +200,7 @@ class HuaweiSolarSensor(Entity):
         self._grid_current = self._phase_A_current
         self._grid_frequency = self._inverter.get("grid_frequency").value
         self._power_meter_active_power = self._inverter.get("power_meter_active_power").value
+        self.input_power = self._inverter.get("input_power").value
         self._grid_A_voltage = self._inverter.get("grid_A_voltage").value
         self._grid_B_voltage = self._inverter.get("grid_B_voltage").value
         self._grid_C_voltage = self._inverter.get("grid_C_voltage").value
