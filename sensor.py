@@ -10,8 +10,12 @@ _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = "Huawei Inverter"
 
+CONF_OPTIMIZERS = "optimizers"
+CONF_BATTERY = "battery"
+
 ATTR_MODEL_ID = "model_id"
 ATTR_SERIAL_NUMBER = "serial_number"
+
 ATTR_NB_PV_STRINGS = "nb_pv_strings"
 ATTR_RATED_POWER = "rated_power"
 ATTR_GRID_STANDARD = "grid_standard"
@@ -59,9 +63,35 @@ ATTR_DEVICE_STATUS = "device_status"
 ATTR_NB_OPTIMIZERS = "nb_optimizers"
 ATTR_NB_ONLINE_OPTIMIZERS = "nb_online_optimizers"
 ATTR_SYSTEM_TIME = "system_time"
+ATTR_STORAGE_STATUS = "storage_status"
+ATTR_STORAGE_CHARGE_DISCHARGE_POWER = "storage_charge_discharge_power"
+ATTR_STORAGE_CURRENT_DAY_CHARGE_CAPACITY = "storage_charge_current_day_charge_capacity"
+ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY = (
+    "storage_charge_current_day_discharge_capacity"
+)
+ATTR_STORAGE_WORKING_MODE = "storage_working_mode"
+ATTR_STORAGE_TIME_OF_USE_PRICE = "storage_time_of_use_price"
+ATTR_STORAGE_LCOE = "storage_lcoe"
+ATTR_STORAGE_MAXIMUM_CHARGING_POWER = "storage_maximum_charging_power"
+ATTR_STORAGE_MAXIMUM_DISCHARGING_POWER = "storage_maximum_discharging_power"
+ATTR_STORAGE_POWER_LIMIT_GRID_TIED_POINT = "storage_power_limit_grid_tied_point"
+ATTR_STORAGE_CHARGING_CUTOFF_CAPACITY = "storage_power_charging_cutoff_capacity"
+ATTR_STORAGE_DISCHARGING_CUTOFF_CAPACITY = "storage_power_discharging_cutoff_capacity"
+ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_PERIOD = (
+    "storage_forced_charging_and_discharging_period"
+)
+ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_POWER = (
+    "storage_forced_charging_and_discharging_power"
+)
 
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({vol.Required(CONF_HOST): cv.string})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_OPTIMIZERS, default=False): cv.boolean,
+        vol.Optional(CONF_BATTERY, default=False): cv.boolean,
+    }
+)
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -75,16 +105,19 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         return False
     _LOGGER.debug("created inverter")
     entities = []
-
-    entities.append(HuaweiSolarSensor(inverter))
+    entities.append(
+        HuaweiSolarSensor(inverter, config[CONF_OPTIMIZERS], config[CONF_BATTERY])
+    )
 
     add_entities(entities, True)
     _LOGGER.debug("added entities")
 
 
 class HuaweiSolarSensor(Entity):
-    def __init__(self, inverter):
+    def __init__(self, inverter, optimizers, battery_installed):
         self._inverter = inverter
+        self._optimizers = optimizers
+        self._battery_installed = battery_installed
         self._hidden = False
         self._unit = POWER_WATT
         self._icon = "mdi:solar-power"
@@ -95,10 +128,12 @@ class HuaweiSolarSensor(Entity):
         self._pv_strings_voltage = [None] * self._nb_pv_strings
         self._pv_strings_current = [None] * self._nb_pv_strings
         self._rated_power = self._inverter.get("rated_power").value
-        try:
+
+        if optimizers:
             self._nb_optimizers = self._inverter.get("nb_optimizers").value
-        except ReadException:
-            self._nb_optimizers = None
+        else:
+            self._nb_optimizers = 0
+
         tmp = self._inverter.get("grid_code").value
         self._grid_standard = tmp.standard
         self._grid_country = tmp.country
@@ -172,8 +207,26 @@ class HuaweiSolarSensor(Entity):
         for i in range(int(self._nb_pv_strings)):
             attributes[f"pv_string_{i+1:02}_voltage"] = self._pv_strings_voltage[i]
             attributes[f"pv_string_{i+1:02}_current"] = self._pv_strings_current[i]
+
         if self._nb_optimizers:
             attributes[ATTR_NB_ONLINE_OPTIMIZERS] = self._nb_online_optimizers
+
+        if self._battery_installed:
+            attributes[ATTR_STORAGE_STATUS]: self._storage_status
+            attributes[ATTR_STORAGE_CHARGE_DISCHARGE_POWER]: self._storage_charge_discharge_power
+            attributes[ATTR_STORAGE_CURRENT_DAY_CHARGE_CAPACITY]: self._storage_charge_current_day_charge_capacity
+            attributes[ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY]: self._storage_charge_current_day_discharge_capacity
+            attributes[ATTR_STORAGE_WORKING_MODE]: self._storage_working_mode
+            attributes[ATTR_STORAGE_TIME_OF_USE_PRICE]: self._storage_time_of_use_price
+            attributes[ATTR_STORAGE_LCOE]: self._storage_lcoe
+            attributes[ATTR_STORAGE_MAXIMUM_CHARGING_POWER]: self._storage_maximum_charging_power
+            attributes[ATTR_STORAGE_MAXIMUM_DISCHARGING_POWER]: self._storage_maximum_discharging_power
+            attributes[ATTR_STORAGE_POWER_LIMIT_GRID_TIED_POINT]: self._storage_power_limit_grid_tied_point
+            attributes[ATTR_STORAGE_CHARGING_CUTOFF_CAPACITY]: self._storage_power_charging_cutoff_capacity
+            attributes[ATTR_STORAGE_DISCHARGING_CUTOFF_CAPACITY]: self._storage_power_discharging_cutoff_capacity
+            attributes[ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_PERIOD]: self._storage_forced_charging_and_discharging_period
+            attributes[ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_POWER]: self._storage_forced_charging_and_discharging_power
+
         return attributes
 
     @property
@@ -199,7 +252,9 @@ class HuaweiSolarSensor(Entity):
         self._grid_voltage = self._line_voltage_A_B
         self._grid_current = self._phase_A_current
         self._grid_frequency = self._inverter.get("grid_frequency").value
-        self._power_meter_active_power = self._inverter.get("power_meter_active_power").value
+        self._power_meter_active_power = self._inverter.get(
+            "power_meter_active_power"
+        ).value
         self.input_power = self._inverter.get("input_power").value
         self._grid_A_voltage = self._inverter.get("grid_A_voltage").value
         self._grid_B_voltage = self._inverter.get("grid_B_voltage").value
@@ -207,13 +262,23 @@ class HuaweiSolarSensor(Entity):
         self._active_grid_A_current = self._inverter.get("active_grid_A_current").value
         self._active_grid_B_current = self._inverter.get("active_grid_B_current").value
         self._active_grid_C_current = self._inverter.get("active_grid_C_current").value
-        self._active_grid_power_factor = self._inverter.get("active_grid_power_factor").value
+        self._active_grid_power_factor = self._inverter.get(
+            "active_grid_power_factor"
+        ).value
         self._active_grid_frequency = self._inverter.get("active_grid_frequency").value
         self._grid_exporterd_energy = self._inverter.get("grid_exporterd_energy").value
-        self._grid_accumulated_energy = self._inverter.get("grid_accumulated_energy").value
-        self._active_grid_A_B_voltage = self._inverter.get("active_grid_A_B_voltage").value
-        self._active_grid_B_C_voltage = self._inverter.get("active_grid_B_C_voltage").value
-        self._active_grid_C_A_voltage = self._inverter.get("active_grid_C_A_voltage").value
+        self._grid_accumulated_energy = self._inverter.get(
+            "grid_accumulated_energy"
+        ).value
+        self._active_grid_A_B_voltage = self._inverter.get(
+            "active_grid_A_B_voltage"
+        ).value
+        self._active_grid_B_C_voltage = self._inverter.get(
+            "active_grid_B_C_voltage"
+        ).value
+        self._active_grid_C_A_voltage = self._inverter.get(
+            "active_grid_C_A_voltage"
+        ).value
         self._active_grid_A_power = self._inverter.get("active_grid_A_power").value
         self._active_grid_B_power = self._inverter.get("active_grid_B_power").value
         self._active_grid_C_power = self._inverter.get("active_grid_C_power").value
@@ -222,10 +287,49 @@ class HuaweiSolarSensor(Entity):
         self._system_time = self._inverter.get("system_time").value
         self._internal_temperature = self._inverter.get("internal_temperature").value
         self._device_status = self._inverter.get("device_status").value
+
         if self._nb_optimizers:
             self._nb_online_optimizers = self._inverter.get(
                 "nb_online_optimizers"
             ).value
+
+        if self._battery_installed:
+            self._storage_status = self._inverter.get("storage_status").value
+            self._storage_charge_discharge_power = self._inverter.get(
+                "storage_charge_discharge_power"
+            )
+            self._storage_charge_current_day_charge_capacity = self._inverter.get(
+                "storage_charge_current_day_charge_capacity"
+            )
+            self._storage_charge_current_day_discharge_capacity = self._inverter.get(
+                "storage_charge_current_day_discharge_capacity"
+            )
+            self._storage_working_mode = self._inverter.get("storage_working_mode")
+            self._storage_time_of_use_price = self._inverter.get(
+                "storage_time_of_use_price"
+            )
+            self._storage_lcoe = self._inverter.get("storage_lcoe")
+            self._storage_maximum_charging_power = self._inverter.get(
+                "storage_maximum_charging_power"
+            )
+            self._storage_maximum_discharging_power = self._inverter.get(
+                "storage_maximum_discharging_power"
+            )
+            self._storage_power_limit_grid_tied_point = self._inverter.get(
+                "storage_power_limit_grid_tied_point"
+            )
+            self._storage_power_charging_cutoff_capacity = self._inverter.get(
+                "storage_power_charging_cutoff_capacity"
+            )
+            self._storage_power_discharging_cutoff_capacity = self._inverter.get(
+                "storage_power_discharging_cutoff_capacity"
+            )
+            self._storage_forced_charging_and_discharging_period = self._inverter.get(
+                "storage_forced_charging_and_discharging_period"
+            )
+            self._storage_forced_charging_and_discharging_power = self._inverter.get(
+                "storage_forced_charging_and_discharging_power"
+            )
 
         self._day_active_power_peak = self._inverter.get("day_active_power_peak").value
         for i in range(int(self._nb_pv_strings)):

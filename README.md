@@ -15,6 +15,8 @@ Then configure the sensors by setting up the stib platform in `configuration.yam
 | Name | Type | Requirement | Description
 | ---- | ---- | ------- | -----------
 | host | string | **Required** | hostname or ip address
+| optimizers | boolean | **Optional** | Set to true if you have optimizers and want to see information about them.
+| battery | boolean | **Optional** | Set to true if you have a battery and want to see information about it.
 
 **Example:**
 
@@ -22,4 +24,6 @@ Then configure the sensors by setting up the stib platform in `configuration.yam
 sensor:
   - platform: huawei_solar   
     host: '192.168.0.123'
+    optimizers: true
+    battery: true
 ```
