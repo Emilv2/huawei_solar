@@ -213,19 +213,39 @@ class HuaweiSolarSensor(Entity):
 
         if self._battery_installed:
             attributes[ATTR_STORAGE_STATUS]: self._storage_status
-            attributes[ATTR_STORAGE_CHARGE_DISCHARGE_POWER]: self._storage_charge_discharge_power
-            attributes[ATTR_STORAGE_CURRENT_DAY_CHARGE_CAPACITY]: self._storage_charge_current_day_charge_capacity
-            attributes[ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY]: self._storage_charge_current_day_discharge_capacity
+            attributes[
+                ATTR_STORAGE_CHARGE_DISCHARGE_POWER
+            ]: self._storage_charge_discharge_power
+            attributes[
+                ATTR_STORAGE_CURRENT_DAY_CHARGE_CAPACITY
+            ]: self._storage_charge_current_day_charge_capacity
+            attributes[
+                ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY
+            ]: self._storage_charge_current_day_discharge_capacity
             attributes[ATTR_STORAGE_WORKING_MODE]: self._storage_working_mode
             attributes[ATTR_STORAGE_TIME_OF_USE_PRICE]: self._storage_time_of_use_price
             attributes[ATTR_STORAGE_LCOE]: self._storage_lcoe
-            attributes[ATTR_STORAGE_MAXIMUM_CHARGING_POWER]: self._storage_maximum_charging_power
-            attributes[ATTR_STORAGE_MAXIMUM_DISCHARGING_POWER]: self._storage_maximum_discharging_power
-            attributes[ATTR_STORAGE_POWER_LIMIT_GRID_TIED_POINT]: self._storage_power_limit_grid_tied_point
-            attributes[ATTR_STORAGE_CHARGING_CUTOFF_CAPACITY]: self._storage_power_charging_cutoff_capacity
-            attributes[ATTR_STORAGE_DISCHARGING_CUTOFF_CAPACITY]: self._storage_power_discharging_cutoff_capacity
-            attributes[ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_PERIOD]: self._storage_forced_charging_and_discharging_period
-            attributes[ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_POWER]: self._storage_forced_charging_and_discharging_power
+            attributes[
+                ATTR_STORAGE_MAXIMUM_CHARGING_POWER
+            ]: self._storage_maximum_charging_power
+            attributes[
+                ATTR_STORAGE_MAXIMUM_DISCHARGING_POWER
+            ]: self._storage_maximum_discharging_power
+            attributes[
+                ATTR_STORAGE_POWER_LIMIT_GRID_TIED_POINT
+            ]: self._storage_power_limit_grid_tied_point
+            attributes[
+                ATTR_STORAGE_CHARGING_CUTOFF_CAPACITY
+            ]: self._storage_power_charging_cutoff_capacity
+            attributes[
+                ATTR_STORAGE_DISCHARGING_CUTOFF_CAPACITY
+            ]: self._storage_power_discharging_cutoff_capacity
+            attributes[
+                ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_PERIOD
+            ]: self._storage_forced_charging_and_discharging_period
+            attributes[
+                ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_POWER
+            ]: self._storage_forced_charging_and_discharging_power
 
         return attributes
 
@@ -297,39 +317,41 @@ class HuaweiSolarSensor(Entity):
             self._storage_status = self._inverter.get("storage_status").value
             self._storage_charge_discharge_power = self._inverter.get(
                 "storage_charge_discharge_power"
-            )
+            ).value
             self._storage_charge_current_day_charge_capacity = self._inverter.get(
                 "storage_charge_current_day_charge_capacity"
-            )
+            ).value
             self._storage_charge_current_day_discharge_capacity = self._inverter.get(
                 "storage_charge_current_day_discharge_capacity"
-            )
-            self._storage_working_mode = self._inverter.get("storage_working_mode")
+            ).value
+            self._storage_working_mode = self._inverter.get(
+                "storage_working_mode"
+            ).value
             self._storage_time_of_use_price = self._inverter.get(
                 "storage_time_of_use_price"
-            )
-            self._storage_lcoe = self._inverter.get("storage_lcoe")
+            ).value
+            self._storage_lcoe = self._inverter.get("storage_lcoe").value
             self._storage_maximum_charging_power = self._inverter.get(
                 "storage_maximum_charging_power"
-            )
+            ).value
             self._storage_maximum_discharging_power = self._inverter.get(
                 "storage_maximum_discharging_power"
-            )
+            ).value
             self._storage_power_limit_grid_tied_point = self._inverter.get(
                 "storage_power_limit_grid_tied_point"
-            )
+            ).value
             self._storage_power_charging_cutoff_capacity = self._inverter.get(
                 "storage_power_charging_cutoff_capacity"
-            )
+            ).value
             self._storage_power_discharging_cutoff_capacity = self._inverter.get(
                 "storage_power_discharging_cutoff_capacity"
-            )
+            ).value
             self._storage_forced_charging_and_discharging_period = self._inverter.get(
                 "storage_forced_charging_and_discharging_period"
-            )
+            ).value
             self._storage_forced_charging_and_discharging_power = self._inverter.get(
                 "storage_forced_charging_and_discharging_power"
-            )
+            ).value
 
         self._day_active_power_peak = self._inverter.get("day_active_power_peak").value
         for i in range(int(self._nb_pv_strings)):
