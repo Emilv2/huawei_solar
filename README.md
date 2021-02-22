@@ -7,12 +7,9 @@ This code is a custom component to read the data from Huawei inverters
 This is a custom component. Custom components are not installed by default in your Home Assistant installation. [HACS](https://github.com/custom-components/hacs) is an Home Assistant store integration from which this integration can be easily installed and updated. By using HACS you will also make sure that any new versions are installed by default and as simple as the installation itself.
 
 ### Manual
-Copy these files to custom_components/huawei_solar/
+Copy the `custom_components` folder into your HA configuration folder (if you already have the `custom_components` folder, copy the `huawei_solar` folder into it).
 
-You can try the async component by renaming sensor_async.py sensor.py,
-but this seems to be currently broken with HA 105, pymodbus 2.3.0 and python 3.7.
-
-Then configure the sensors by setting up the stib platform in `configuration.yaml`.
+Then configure the sensors by setting up the huawei_solar platform in `configuration.yaml`.
 
 ## Options
 
