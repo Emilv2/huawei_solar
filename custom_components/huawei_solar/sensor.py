@@ -65,9 +65,9 @@ ATTR_NB_ONLINE_OPTIMIZERS = "nb_online_optimizers"
 ATTR_SYSTEM_TIME = "system_time"
 ATTR_STORAGE_STATUS = "storage_status"
 ATTR_STORAGE_CHARGE_DISCHARGE_POWER = "storage_charge_discharge_power"
-ATTR_STORAGE_CURRENT_DAY_CHARGE_CAPACITY = "storage_charge_current_day_charge_capacity"
+ATTR_STORAGE_CURRENT_DAY_CHARGE_CAPACITY = "storage_current_day_charge_capacity"
 ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY = (
-    "storage_charge_current_day_discharge_capacity"
+    "storage_current_day_discharge_capacity"
 )
 ATTR_STORAGE_WORKING_MODE = "storage_working_mode"
 ATTR_STORAGE_TIME_OF_USE_PRICE = "storage_time_of_use_price"
@@ -218,10 +218,10 @@ class HuaweiSolarSensor(Entity):
             ]: self._storage_charge_discharge_power
             attributes[
                 ATTR_STORAGE_CURRENT_DAY_CHARGE_CAPACITY
-            ]: self._storage_charge_current_day_charge_capacity
+            ]: self._storage_current_day_charge_capacity
             attributes[
                 ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY
-            ]: self._storage_charge_current_day_discharge_capacity
+            ]: self._storage_current_day_discharge_capacity
             attributes[ATTR_STORAGE_WORKING_MODE]: self._storage_working_mode
             attributes[ATTR_STORAGE_TIME_OF_USE_PRICE]: self._storage_time_of_use_price
             attributes[ATTR_STORAGE_LCOE]: self._storage_lcoe
@@ -318,11 +318,11 @@ class HuaweiSolarSensor(Entity):
             self._storage_charge_discharge_power = self._inverter.get(
                 "storage_charge_discharge_power"
             ).value
-            self._storage_charge_current_day_charge_capacity = self._inverter.get(
-                "storage_charge_current_day_charge_capacity"
+            self._storage_current_day_charge_capacity = self._inverter.get(
+                "storage_current_day_charge_capacity"
             ).value
-            self._storage_charge_current_day_discharge_capacity = self._inverter.get(
-                "storage_charge_current_day_discharge_capacity"
+            self._storage_current_day_discharge_capacity = self._inverter.get(
+                "storage_current_day_discharge_capacity"
             ).value
             self._storage_working_mode = self._inverter.get(
                 "storage_working_mode"
