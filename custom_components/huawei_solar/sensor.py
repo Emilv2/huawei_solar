@@ -255,6 +255,10 @@ class HuaweiSolarSensor(Entity):
 
     def update(self):
         self._state = self._inverter.get("active_power").value
+        self._power_meter_active_power = self._inverter.get(
+            "power_meter_active_power"
+        ).value
+        self.input_power = self._inverter.get("input_power").value
         self._daily_yield = self._inverter.get("daily_yield_energy").value
         self._total_yield = self._inverter.get("accumulated_yield_energy").value
         self._reactive_power = self._inverter.get("reactive_power").value
@@ -272,10 +276,6 @@ class HuaweiSolarSensor(Entity):
         self._grid_voltage = self._line_voltage_A_B
         self._grid_current = self._phase_A_current
         self._grid_frequency = self._inverter.get("grid_frequency").value
-        self._power_meter_active_power = self._inverter.get(
-            "power_meter_active_power"
-        ).value
-        self.input_power = self._inverter.get("input_power").value
         self._grid_A_voltage = self._inverter.get("grid_A_voltage").value
         self._grid_B_voltage = self._inverter.get("grid_B_voltage").value
         self._grid_C_voltage = self._inverter.get("grid_C_voltage").value
