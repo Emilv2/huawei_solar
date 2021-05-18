@@ -236,10 +236,10 @@ class HuaweiSolarSensor(Entity):
             ]: self._storage_power_limit_grid_tied_point
             attributes[
                 ATTR_STORAGE_CHARGING_CUTOFF_CAPACITY
-            ]: self._storage_power_charging_cutoff_capacity
+            ]: self._storage_charging_cutoff_capacity
             attributes[
                 ATTR_STORAGE_DISCHARGING_CUTOFF_CAPACITY
-            ]: self._storage_power_discharging_cutoff_capacity
+            ]: self._storage_discharging_cutoff_capacity
             attributes[
                 ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_PERIOD
             ]: self._storage_forced_charging_and_discharging_period
@@ -340,11 +340,11 @@ class HuaweiSolarSensor(Entity):
             self._storage_power_limit_grid_tied_point = self._inverter.get(
                 "storage_power_limit_grid_tied_point"
             ).value
-            self._storage_power_charging_cutoff_capacity = self._inverter.get(
-                "storage_power_charging_cutoff_capacity"
+            self._storage_charging_cutoff_capacity = self._inverter.get(
+                "storage_charging_cutoff_capacity"
             ).value
-            self._storage_power_discharging_cutoff_capacity = self._inverter.get(
-                "storage_power_discharging_cutoff_capacity"
+            self._storage_discharging_cutoff_capacity = self._inverter.get(
+                "storage_discharging_cutoff_capacity"
             ).value
             self._storage_forced_charging_and_discharging_period = self._inverter.get(
                 "storage_forced_charging_and_discharging_period"
