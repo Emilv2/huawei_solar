@@ -75,8 +75,8 @@ ATTR_STORAGE_LCOE = "storage_lcoe"
 ATTR_STORAGE_MAXIMUM_CHARGING_POWER = "storage_maximum_charging_power"
 ATTR_STORAGE_MAXIMUM_DISCHARGING_POWER = "storage_maximum_discharging_power"
 ATTR_STORAGE_POWER_LIMIT_GRID_TIED_POINT = "storage_power_limit_grid_tied_point"
-ATTR_STORAGE_CHARGING_CUTOFF_CAPACITY = "storage_power_charging_cutoff_capacity"
-ATTR_STORAGE_DISCHARGING_CUTOFF_CAPACITY = "storage_power_discharging_cutoff_capacity"
+ATTR_STORAGE_CHARGING_CUTOFF_CAPACITY = "storage_charging_cutoff_capacity"
+ATTR_STORAGE_DISCHARGING_CUTOFF_CAPACITY = "storage_discharging_cutoff_capacity"
 ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_PERIOD = (
     "storage_forced_charging_and_discharging_period"
 )
