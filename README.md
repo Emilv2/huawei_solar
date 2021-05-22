@@ -5,6 +5,7 @@ This code is a custom component to read the data from Huawei inverters
 
 ### Available with HACS (Home Assistant Community Store)
 This is a custom component. Custom components are not installed by default in your Home Assistant installation. [HACS](https://github.com/custom-components/hacs) is an Home Assistant store integration from which this integration can be easily installed and updated. By using HACS you will also make sure that any new versions are installed by default and as simple as the installation itself.
+Currently this custom component is not in the HACS repositories, in the [HACS documentation](https://hacs.xyz/docs/faq/custom_repositories/) you can find how to add a custom repository.
 
 ### Manual
 Copy the `custom_components` folder into your HA configuration folder (if you already have the `custom_components` folder, copy the `huawei_solar` folder into it).
