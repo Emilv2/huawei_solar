@@ -69,7 +69,8 @@ ATTR_STORAGE_CURRENT_DAY_CHARGE_CAPACITY = "storage_current_day_charge_capacity"
 ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY = (
     "storage_current_day_discharge_capacity"
 )
-ATTR_STORAGE_WORKING_MODE = "storage_working_mode"
+ATTR_STORAGE_WORKING_MODE_A = "storage_working_mode_a"
+ATTR_STORAGE_WORKING_MODE_B = "storage_working_mode_b"
 ATTR_STORAGE_TIME_OF_USE_PRICE = "storage_time_of_use_price"
 ATTR_STORAGE_LCOE = "storage_lcoe"
 ATTR_STORAGE_MAXIMUM_CHARGING_POWER = "storage_maximum_charging_power"
@@ -222,7 +223,8 @@ class HuaweiSolarSensor(Entity):
             attributes[
                 ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY
             ] = self._storage_current_day_discharge_capacity
-            attributes[ATTR_STORAGE_WORKING_MODE] = self._storage_working_mode
+            attributes[ATTR_STORAGE_WORKING_MODE_A] = self._storage_working_mode_a
+            attributes[ATTR_STORAGE_WORKING_MODE_B] = self._storage_working_mode_b
             attributes[ATTR_STORAGE_TIME_OF_USE_PRICE] = self._storage_time_of_use_price
             attributes[ATTR_STORAGE_LCOE] = self._storage_lcoe
             attributes[
@@ -324,8 +326,11 @@ class HuaweiSolarSensor(Entity):
             self._storage_current_day_discharge_capacity = self._inverter.get(
                 "storage_current_day_discharge_capacity"
             ).value
-            self._storage_working_mode = self._inverter.get(
-                "storage_working_mode"
+            self._storage_working_mode_a = self._inverter.get(
+                "storage_working_mode_a"
+            ).value
+            self._storage_working_mode_b = self._inverter.get(
+                "storage_working_mode_b"
             ).value
             self._storage_time_of_use_price = self._inverter.get(
                 "storage_time_of_use_price"
