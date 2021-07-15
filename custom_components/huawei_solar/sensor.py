@@ -189,7 +189,7 @@ class HuaweiSolarSensor(Entity):
             ATTR_ACTIVE_GRID_C_CURRENT: self._active_grid_C_current,
             ATTR_ACTIVE_GRID_POWER_FACTOR: self._active_grid_power_factor,
             ATTR_ACTIVE_GRID_FREQUENCY: self._active_grid_frequency,
-            ATTR_GRID_EXPORTED_ENERGY: self._grid_exporterd_energy,
+            ATTR_GRID_EXPORTED_ENERGY: self._grid_exported_energy,
             ATTR_GRID_ACCUMULATED_ENERGY: self._grid_accumulated_energy,
             ATTR_ACTIVE_GRID_A_B_VOLTAGE: self._active_grid_A_B_voltage,
             ATTR_ACTIVE_GRID_B_C_VOLTAGE: self._active_grid_B_C_voltage,
@@ -286,7 +286,7 @@ class HuaweiSolarSensor(Entity):
             "active_grid_power_factor"
         ).value
         self._active_grid_frequency = self._inverter.get("active_grid_frequency").value
-        self._grid_exporterd_energy = self._inverter.get("grid_exporterd_energy").value
+        self._grid_exported_energy = self._inverter.get("grid_exported_energy").value
         self._grid_accumulated_energy = self._inverter.get(
             "grid_accumulated_energy"
         ).value
