@@ -63,7 +63,7 @@ ATTR_DEVICE_STATUS = "device_status"
 ATTR_NB_OPTIMIZERS = "nb_optimizers"
 ATTR_NB_ONLINE_OPTIMIZERS = "nb_online_optimizers"
 ATTR_SYSTEM_TIME = "system_time"
-ATTR_STORAGE_STATUS = "storage_status"
+ATTR_STORAGE_RUNNING_STATUS = "storage_running_status"
 ATTR_STORAGE_CHARGE_DISCHARGE_POWER = "storage_charge_discharge_power"
 ATTR_STORAGE_CURRENT_DAY_CHARGE_CAPACITY = "storage_current_day_charge_capacity"
 ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY = (
@@ -83,6 +83,9 @@ ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_PERIOD = (
 )
 ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_POWER = (
     "storage_forced_charging_and_discharging_power"
+)
+ATTR_STORAGE_STATE_OF_CAPICITY = (
+    "storage_state_of_capacity"
 )
 
 
@@ -213,7 +216,7 @@ class HuaweiSolarSensor(Entity):
             attributes[ATTR_NB_ONLINE_OPTIMIZERS] = self._nb_online_optimizers
 
         if self._battery_installed:
-            attributes[ATTR_STORAGE_STATUS] = self._storage_status
+            attributes[ATTR_STORAGE_RUNNING_STATUS] = self._storage_running_status
             attributes[
                 ATTR_STORAGE_CHARGE_DISCHARGE_POWER
             ] = self._storage_charge_discharge_power
@@ -248,6 +251,9 @@ class HuaweiSolarSensor(Entity):
             attributes[
                 ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_POWER
             ] = self._storage_forced_charging_and_discharging_power
+            attributes[
+                ATTR_STORAGE_STATE_OF_CAPICITY
+            ] = self._storage_state_of_capacity
 
         return attributes
 
@@ -316,7 +322,7 @@ class HuaweiSolarSensor(Entity):
             ).value
 
         if self._battery_installed:
-            self._storage_status = self._inverter.get("storage_status").value
+            self._storage_running_status = self._inverter.get("storage_running_status").value
             self._storage_charge_discharge_power = self._inverter.get(
                 "storage_charge_discharge_power"
             ).value
@@ -356,6 +362,9 @@ class HuaweiSolarSensor(Entity):
             ).value
             self._storage_forced_charging_and_discharging_power = self._inverter.get(
                 "storage_forced_charging_and_discharging_power"
+            ).value
+            self._storage_state_of_capacity = self._inverter.get(
+                ATTR_STORAGE_STATE_OF_CAPICITY
             ).value
 
         self._day_active_power_peak = self._inverter.get("day_active_power_peak").value
