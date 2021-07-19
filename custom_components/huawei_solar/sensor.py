@@ -70,7 +70,7 @@ ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY = (
     "storage_current_day_discharge_capacity"
 )
 ATTR_STORAGE_WORKING_MODE_A = "storage_working_mode_a"
-ATTR_STORAGE_WORKING_MODE_B = "storage_working_mode_b"
+ATTR_STORAGE_WORKING_MODE_B = "storage_unit_1_working_mode_b"
 ATTR_STORAGE_TIME_OF_USE_PRICE = "storage_time_of_use_price"
 ATTR_STORAGE_LCOE = "storage_lcoe"
 ATTR_STORAGE_MAXIMUM_CHARGING_POWER = "storage_maximum_charging_power"
