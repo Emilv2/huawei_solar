@@ -336,7 +336,7 @@ class HuaweiSolarSensor(Entity):
                 "storage_working_mode_a"
             ).value
             self._storage_working_mode_b = self._inverter.get(
-                "storage_working_mode_b"
+                ATTR_STORAGE_WORKING_MODE_B
             ).value
             self._storage_time_of_use_price = self._inverter.get(
                 "storage_time_of_use_price"
