@@ -19,6 +19,7 @@ Then configure the sensors by setting up the huawei_solar platform in `configura
 | host | string | **Required** | hostname or ip address
 | optimizers | boolean | **Optional** | Set to true if you have optimizers and want to see information about them.
 | battery | boolean | **Optional** | Set to true if you have a battery and want to see information about it.
+| slave | int | **Optional** | Set the slave unit, set `slave = 1` when using the dongle.
 
 **Example:**
 
@@ -28,4 +29,5 @@ sensor:
     host: '192.168.0.123'
     optimizers: true
     battery: true
+    slave: 1
 ```

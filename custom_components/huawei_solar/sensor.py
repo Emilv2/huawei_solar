@@ -12,6 +12,7 @@ DEFAULT_NAME = "Huawei Inverter"
 
 CONF_OPTIMIZERS = "optimizers"
 CONF_BATTERY = "battery"
+CONF_SLAVE = "slave"
 
 ATTR_MODEL_ID = "model_id"
 ATTR_SERIAL_NUMBER = "serial_number"
@@ -94,16 +95,17 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_HOST): cv.string,
         vol.Optional(CONF_OPTIMIZERS, default=False): cv.boolean,
         vol.Optional(CONF_BATTERY, default=False): cv.boolean,
+        vol.Optional(CONF_SLAVE, default=0): int,
     }
 )
+
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     _LOGGER.debug("Setup Huawei Inverter")
 
-    host = config[CONF_HOST]
     try:
-        inverter = HuaweiSolar(host)
+        inverter = HuaweiSolar(host=config[CONF_HOST], slave=config[CONF_SLAVE])
     except Exception as ex:
         _LOGGER.error("could not connect to Huawei inverter: %s", ex)
         return False
