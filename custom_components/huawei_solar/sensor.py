@@ -88,7 +88,12 @@ ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_POWER = (
 ATTR_STORAGE_STATE_OF_CAPICITY = (
     "storage_state_of_capacity"
 )
-
+ATTR_STORAGE_TOTAL_CHARGE = (
+    "storage_total_charge"
+)
+ATTR_STORAGE_TOTAL_DISCHARGE = (
+    "storage_total_discharge"
+)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -256,7 +261,8 @@ class HuaweiSolarSensor(Entity):
             attributes[
                 ATTR_STORAGE_STATE_OF_CAPICITY
             ] = self._storage_state_of_capacity
-
+            attributes[ATTR_STORAGE_TOTAL_CHARGE] = self._storage_total_charge
+            attributes[ATTR_STORAGE_TOTAL_DISCHARGE] = self._storage_total_discharge
         return attributes
 
     @property
@@ -367,6 +373,12 @@ class HuaweiSolarSensor(Entity):
             ).value
             self._storage_state_of_capacity = self._inverter.get(
                 ATTR_STORAGE_STATE_OF_CAPICITY
+            ).value
+            self._storage_total_charge = self._inverter.get(
+                "storage_unit_1_total_charge"
+            ).value
+            self._storage_total_discharge = self._inverter.get(
+                "storage_unit_1_total_discharge"
             ).value
 
         self._day_active_power_peak = self._inverter.get("day_active_power_peak").value
