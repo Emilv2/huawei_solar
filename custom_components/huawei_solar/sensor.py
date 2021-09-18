@@ -375,10 +375,10 @@ class HuaweiSolarSensor(Entity):
                 ATTR_STORAGE_STATE_OF_CAPICITY
             ).value
             self._storage_total_charge = self._inverter.get(
-                "storage_unit_1_total_charge"
+                "storage_total_charge"
             ).value
             self._storage_total_discharge = self._inverter.get(
-                "storage_unit_1_total_discharge"
+                "storage_total_discharge"
             ).value
 
         self._day_active_power_peak = self._inverter.get("day_active_power_peak").value
