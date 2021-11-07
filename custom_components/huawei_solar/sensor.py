@@ -21,7 +21,7 @@ from homeassistant.const import (
 from homeassistant.helpers.entity import Entity
 from homeassistant.util.dt import utc_from_timestamp
 
-from .huawei_solar import AsyncHuaweiSolar, ReadException, ConnectionException
+from huawei_solar import AsyncHuaweiSolar, ReadException, ConnectionException
 
 _LOGGER = logging.getLogger(__name__)
 
