@@ -1,99 +1,137 @@
-import voluptuous as vol
 import logging
-from homeassistant.components.sensor import PLATFORM_SCHEMA
-from huawei_solar import HuaweiSolar, ReadException
+
 import homeassistant.helpers.config_validation as cv
-from homeassistant.const import CONF_HOST, POWER_WATT
+import voluptuous as vol
+from homeassistant.components.sensor import (
+    PLATFORM_SCHEMA,
+    STATE_CLASS_MEASUREMENT,
+    ATTR_LAST_RESET,
+    ATTR_STATE_CLASS,
+)
+
+from homeassistant.const import (
+    CONF_HOST,
+    POWER_WATT,
+    ENERGY_KILO_WATT_HOUR,
+    DEVICE_CLASS_CURRENT,
+    DEVICE_CLASS_ENERGY,
+    DEVICE_CLASS_POWER,
+    DEVICE_CLASS_VOLTAGE,
+)
 from homeassistant.helpers.entity import Entity
+from homeassistant.util.dt import utc_from_timestamp
+
+from .huawei_solar import AsyncHuaweiSolar, ReadException, ConnectionException
 
 _LOGGER = logging.getLogger(__name__)
-
-DEFAULT_NAME = "Huawei Inverter"
 
 CONF_OPTIMIZERS = "optimizers"
 CONF_BATTERY = "battery"
 CONF_SLAVE = "slave"
 
-ATTR_MODEL_ID = "model_id"
-ATTR_SERIAL_NUMBER = "serial_number"
+STATE_REGISTER = "active_power"
 
+GRID_CODE_REGISTER = "grid_code"
 ATTR_NB_PV_STRINGS = "nb_pv_strings"
-ATTR_RATED_POWER = "rated_power"
-ATTR_GRID_STANDARD = "grid_standard"
-ATTR_GRID_COUNTRY = "grid_country"
-ATTR_DAILY_YIELD = "daily_yield"
-ATTR_TOTAL_YIELD = "total_yield"
-ATTR_DAY_POWER_PEAK = "day_active_power_peak"
-ATTR_REACTIVE_POWER = "reactive_power"
-ATTR_POWER_FACTOR = "power_factor"
-ATTR_EFFICIENCY = "efficiency"
-ATTR_GRID_FREQUENCY = "grid_frequency"
-ATTR_GRID_VOLTAGE = "grid_voltage"
-ATTR_GRID_CURRENT = "grid_current"
-ATTR_LINE_VOLTAGE_A_B = "line_voltage_A_B"
-ATTR_LINE_VOLTAGE_B_C = "line_voltage_B_C"
-ATTR_LINE_VOLTAGE_C_A = "line_voltage_C_A"
-ATTR_PHASE_A_VOLTAGE = "phase_A_voltage"
-ATTR_PHASE_B_VOLTAGE = "phase_B_voltage"
-ATTR_PHASE_C_VOLTAGE = "phase_C_voltage"
-ATTR_PHASE_A_CURRENT = "phase_A_current"
-ATTR_PHASE_B_CURRENT = "phase_B_current"
-ATTR_PHASE_C_CURRENT = "phase_C_current"
-ATTR_POWER_METER_ACTIVE_POWER = "power_meter_active_power"
-ATTR_INPUT_POWER = "input_power"
-ATTR_GRID_A_VOLTAGE = "grid_A_voltage"
-ATTR_GRID_B_VOLTAGE = "grid_B_voltage"
-ATTR_GRID_C_VOLTAGE = "grid_C_voltage"
-ATTR_ACTIVE_GRID_A_CURRENT = "active_grid_A_current"
-ATTR_ACTIVE_GRID_B_CURRENT = "active_grid_B_current"
-ATTR_ACTIVE_GRID_C_CURRENT = "active_grid_C_current"
-ATTR_ACTIVE_GRID_POWER_FACTOR = "active_grid_power_factor"
-ATTR_ACTIVE_GRID_FREQUENCY = "active_grid_frequency"
-ATTR_GRID_EXPORTED_ENERGY = "grid_exported_energy"
-ATTR_GRID_ACCUMULATED_ENERGY = "grid_accumulated_energy"
-ATTR_ACTIVE_GRID_A_B_VOLTAGE = "active_grid_A_B_voltage"
-ATTR_ACTIVE_GRID_B_C_VOLTAGE = "active_grid_B_C_voltage"
-ATTR_ACTIVE_GRID_C_A_VOLTAGE = "active_grid_C_A_voltage"
-ATTR_ACTIVE_GRID_A_POWER = "active_grid_A_power"
-ATTR_ACTIVE_GRID_B_POWER = "active_grid_B_power"
-ATTR_ACTIVE_GRID_C_POWER = "active_grid_C_power"
-ATTR_STARTUP_TIME = "startup_time"
-ATTR_SHUTDOWN_TIME = "shutdown_time"
-ATTR_INTERNAL_TEMPERATURE = "internal_temperature"
-ATTR_DEVICE_STATUS = "device_status"
+
+
+STATIC_ATTR_LIST = [
+"model_id",
+"model_name",
+"serial_number",
+"rated_power",
+]
+
+STATIC_ATTR_GRID_LIST = [
+"grid_standard",
+"grid_country",
+]
+
+DYNAMIC_ATTR_LIST = [
+"day_active_power_peak",
+"reactive_power",
+"power_factor",
+"efficiency",
+"grid_frequency",
+"grid_voltage",
+"grid_current",
+"line_voltage_A_B",
+"line_voltage_B_C",
+"line_voltage_C_A",
+"phase_A_voltage",
+"phase_B_voltage",
+"phase_C_voltage",
+"phase_A_current",
+"phase_B_current",
+"phase_C_current",
+"power_meter_active_power",
+"input_power",
+"grid_A_voltage",
+"grid_B_voltage",
+"grid_C_voltage",
+"active_grid_A_current",
+"active_grid_B_current",
+"active_grid_C_current",
+"active_grid_power_factor",
+"active_grid_frequency",
+"grid_exported_energy",
+"grid_accumulated_energy",
+"active_grid_A_B_voltage",
+"active_grid_B_C_voltage",
+"active_grid_C_A_voltage",
+"active_grid_A_power",
+"active_grid_B_power",
+"active_grid_C_power",
+"startup_time",
+"shutdown_time",
+"internal_temperature",
+"device_status",
+"system_time",
+]
+
+GRID_CODE_REGISTER = "grid_code"
+
+DAILY_YIELD_REGISTER = "daily_yield_energy"
+ACCUMULATED_YIELD_REGISTER = "accumulated_yield_energy"
+
+ENTITY_SENSOR_LIST = [
+        DAILY_YIELD_REGISTER,
+        ACCUMULATED_YIELD_REGISTER,
+        ]
+
+
 ATTR_NB_OPTIMIZERS = "nb_optimizers"
 ATTR_NB_ONLINE_OPTIMIZERS = "nb_online_optimizers"
-ATTR_SYSTEM_TIME = "system_time"
-ATTR_STORAGE_RUNNING_STATUS = "storage_running_status"
-ATTR_STORAGE_CHARGE_DISCHARGE_POWER = "storage_charge_discharge_power"
-ATTR_STORAGE_CURRENT_DAY_CHARGE_CAPACITY = "storage_current_day_charge_capacity"
-ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY = (
-    "storage_current_day_discharge_capacity"
-)
-ATTR_STORAGE_WORKING_MODE_A = "storage_working_mode_a"
-ATTR_STORAGE_WORKING_MODE_B = "storage_unit_1_working_mode_b"
-ATTR_STORAGE_TIME_OF_USE_PRICE = "storage_time_of_use_price"
-ATTR_STORAGE_LCOE = "storage_lcoe"
-ATTR_STORAGE_MAXIMUM_CHARGING_POWER = "storage_maximum_charging_power"
-ATTR_STORAGE_MAXIMUM_DISCHARGING_POWER = "storage_maximum_discharging_power"
-ATTR_STORAGE_POWER_LIMIT_GRID_TIED_POINT = "storage_power_limit_grid_tied_point"
-ATTR_STORAGE_CHARGING_CUTOFF_CAPACITY = "storage_charging_cutoff_capacity"
-ATTR_STORAGE_DISCHARGING_CUTOFF_CAPACITY = "storage_discharging_cutoff_capacity"
-ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_PERIOD = (
-    "storage_forced_charging_and_discharging_period"
-)
-ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_POWER = (
-    "storage_forced_charging_and_discharging_power"
-)
-ATTR_STORAGE_STATE_OF_CAPICITY = (
-    "storage_state_of_capacity"
-)
-ATTR_STORAGE_TOTAL_CHARGE = (
-    "storage_total_charge"
-)
-ATTR_STORAGE_TOTAL_DISCHARGE = (
-    "storage_total_discharge"
-)
+
+
+STORAGE_CHARGE_DISCHARGE_POWER_REGISTER = "storage_charge_discharge_power"
+STORAGE_TOTAL_CHARGE_REGISTER = "storage_total_charge"
+STORAGE_TOTAL_DISCHARGE_REGISTER = "storage_total_discharge"
+
+BATTERY_ENTITY_SENSOR_LIST = [
+STORAGE_CHARGE_DISCHARGE_POWER_REGISTER,
+STORAGE_TOTAL_CHARGE_REGISTER,
+STORAGE_TOTAL_DISCHARGE_REGISTER,
+        ]
+
+
+BATTERY_ATTR_LIST = [
+"storage_running_status",
+"storage_current_day_charge_capacity",
+"storage_current_day_discharge_capacity",
+"storage_working_mode_a",
+"storage_unit_1_working_mode_b",
+"storage_time_of_use_price",
+"storage_lcoe",
+"storage_maximum_charging_power",
+"storage_maximum_discharging_power",
+"storage_power_limit_grid_tied_point",
+"storage_charging_cutoff_capacity",
+"storage_discharging_cutoff_capacity",
+"storage_forced_charging_and_discharging_period",
+"storage_forced_charging_and_discharging_power",
+"storage_state_of_capacity",
+]
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -105,51 +143,98 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 
-
-def setup_platform(hass, config, add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+    """Create the sensor."""
     _LOGGER.debug("Setup Huawei Inverter")
 
     try:
-        inverter = HuaweiSolar(host=config[CONF_HOST], slave=config[CONF_SLAVE])
+        inverter = AsyncHuaweiSolar(host=config[CONF_HOST], loop=hass.loop, slave=config[CONF_SLAVE])
     except Exception as ex:
         _LOGGER.error("could not connect to Huawei inverter: %s", ex)
         return False
     _LOGGER.debug("created inverter")
-    entities = []
-    entities.append(
-        HuaweiSolarSensor(inverter, config[CONF_OPTIMIZERS], config[CONF_BATTERY])
+
+    huawei_solar_sensor = HuaweiSolarSensor(
+        inverter=inverter,
+        optimizers_installed=config[CONF_OPTIMIZERS],
+        battery_installed=config[CONF_BATTERY],
     )
 
-    add_entities(entities, True)
+
+    entities = [
+        huawei_solar_sensor,
+        HuaweiSolarDailyYieldSensor(
+            inverter=inverter,
+            unit=ENERGY_KILO_WATT_HOUR,
+            icon="mdi:solar-power",
+            device_class=DEVICE_CLASS_ENERGY,
+            parent_sensor=huawei_solar_sensor,
+            register=DAILY_YIELD_REGISTER,
+            name_suffix="daily_yield",
+        ),
+        HuaweiSolarTotalYieldSensor(
+            inverter=inverter,
+            unit=ENERGY_KILO_WATT_HOUR,
+            icon="mdi:solar-power",
+            device_class=DEVICE_CLASS_ENERGY,
+            parent_sensor=huawei_solar_sensor,
+            register=ACCUMULATED_YIELD_REGISTER,
+            name_suffix="total_yield",
+        ),
+    ]
+
+    if config[CONF_BATTERY]:
+        entities.extend(
+            [
+                HuaweiSolarEntitySensor(
+                    inverter=inverter,
+                    unit=POWER_WATT,
+                    icon="mdi:solar-power",
+                    device_class=DEVICE_CLASS_POWER,
+                    parent_sensor=huawei_solar_sensor,
+                    register=STORAGE_CHARGE_DISCHARGE_POWER_REGISTER,
+                ),
+                HuaweiSolarTotalYieldSensor(
+                    inverter=inverter,
+                    unit=ENERGY_KILO_WATT_HOUR,
+                    icon="mdi:solar-power",
+                    device_class=DEVICE_CLASS_ENERGY,
+                    parent_sensor=huawei_solar_sensor,
+                    register=STORAGE_TOTAL_CHARGE_REGISTER,
+                ),
+                HuaweiSolarTotalYieldSensor(
+                    inverter=inverter,
+                    unit=ENERGY_KILO_WATT_HOUR,
+                    icon="mdi:solar-power",
+                    device_class=DEVICE_CLASS_ENERGY,
+                    parent_sensor=huawei_solar_sensor,
+                    register=STORAGE_TOTAL_DISCHARGE_REGISTER,
+                ),
+            ]
+        )
+
+    async_add_entities(entities, True)
     _LOGGER.debug("added entities")
 
 
 class HuaweiSolarSensor(Entity):
-    def __init__(self, inverter, optimizers, battery_installed):
+    def __init__(self, inverter, optimizers_installed, battery_installed):
         self._inverter = inverter
-        self._optimizers = optimizers
+        self._optimizers_installed = optimizers_installed
         self._battery_installed = battery_installed
         self._hidden = False
         self._unit = POWER_WATT
         self._icon = "mdi:solar-power"
-        self._name = self._inverter.get("model_name").value
-        self._model_id = self._inverter.get("model_id").value
-        self._serial_number = self._inverter.get("serial_number").value
-        self._nb_pv_strings = self._inverter.get("nb_pv_strings").value
-        self._pv_strings_voltage = [None] * self._nb_pv_strings
-        self._pv_strings_current = [None] * self._nb_pv_strings
-        self._rated_power = self._inverter.get("rated_power").value
+        self._available = False
+        self._state = None
+        self._name = None
+        self.sensor_states = {}
+        self._attributes = {}
 
-        if optimizers:
-            self._nb_optimizers = self._inverter.get("nb_optimizers").value
-        else:
-            self._nb_optimizers = 0
-
-        tmp = self._inverter.get("grid_code").value
-        self._grid_standard = tmp.standard
-        self._grid_country = tmp.country
-
-        self._last_update = None
+    @property
+    def available(self):
+        """Return True if entity is available."""
+        return self._available
 
     @property
     def name(self):
@@ -164,228 +249,191 @@ class HuaweiSolarSensor(Entity):
         return self._state
 
     @property
+    def device_class(self):
+        return DEVICE_CLASS_POWER
+
+    @property
     def device_state_attributes(self):
-        attributes = {
-            ATTR_MODEL_ID: self._model_id,
-            ATTR_SERIAL_NUMBER: self._serial_number,
-            ATTR_NB_PV_STRINGS: self._nb_pv_strings,
-            ATTR_RATED_POWER: self._rated_power,
-            ATTR_GRID_STANDARD: self._grid_standard,
-            ATTR_GRID_COUNTRY: self._grid_country,
-            ATTR_DAILY_YIELD: self._daily_yield,
-            ATTR_TOTAL_YIELD: self._total_yield,
-            ATTR_GRID_VOLTAGE: self._grid_voltage,
-            ATTR_GRID_CURRENT: self._grid_current,
-            ATTR_LINE_VOLTAGE_A_B: self._line_voltage_A_B,
-            ATTR_LINE_VOLTAGE_B_C: self._line_voltage_B_C,
-            ATTR_LINE_VOLTAGE_C_A: self._line_voltage_C_A,
-            ATTR_PHASE_A_VOLTAGE: self._phase_A_voltage,
-            ATTR_PHASE_B_VOLTAGE: self._phase_B_voltage,
-            ATTR_PHASE_C_VOLTAGE: self._phase_C_voltage,
-            ATTR_PHASE_A_CURRENT: self._phase_A_current,
-            ATTR_PHASE_B_CURRENT: self._phase_B_current,
-            ATTR_PHASE_C_CURRENT: self._phase_C_current,
-            ATTR_DAY_POWER_PEAK: self._day_active_power_peak,
-            ATTR_REACTIVE_POWER: self._reactive_power,
-            ATTR_POWER_FACTOR: self._power_factor,
-            ATTR_EFFICIENCY: self._efficiency,
-            ATTR_GRID_FREQUENCY: self._grid_frequency,
-            ATTR_POWER_METER_ACTIVE_POWER: self._power_meter_active_power,
-            ATTR_INPUT_POWER: self.input_power,
-            ATTR_GRID_A_VOLTAGE: self._grid_A_voltage,
-            ATTR_GRID_B_VOLTAGE: self._grid_B_voltage,
-            ATTR_GRID_C_VOLTAGE: self._grid_C_voltage,
-            ATTR_ACTIVE_GRID_A_CURRENT: self._active_grid_A_current,
-            ATTR_ACTIVE_GRID_B_CURRENT: self._active_grid_B_current,
-            ATTR_ACTIVE_GRID_C_CURRENT: self._active_grid_C_current,
-            ATTR_ACTIVE_GRID_POWER_FACTOR: self._active_grid_power_factor,
-            ATTR_ACTIVE_GRID_FREQUENCY: self._active_grid_frequency,
-            ATTR_GRID_EXPORTED_ENERGY: self._grid_exported_energy,
-            ATTR_GRID_ACCUMULATED_ENERGY: self._grid_accumulated_energy,
-            ATTR_ACTIVE_GRID_A_B_VOLTAGE: self._active_grid_A_B_voltage,
-            ATTR_ACTIVE_GRID_B_C_VOLTAGE: self._active_grid_B_C_voltage,
-            ATTR_ACTIVE_GRID_C_A_VOLTAGE: self._active_grid_C_A_voltage,
-            ATTR_ACTIVE_GRID_A_POWER: self._active_grid_A_power,
-            ATTR_ACTIVE_GRID_B_POWER: self._active_grid_B_power,
-            ATTR_ACTIVE_GRID_C_POWER: self._active_grid_C_power,
-            ATTR_STARTUP_TIME: self._startup_time.isoformat(),
-            ATTR_SHUTDOWN_TIME: self._shutdown_time.isoformat(),
-            ATTR_INTERNAL_TEMPERATURE: self._internal_temperature,
-            ATTR_DEVICE_STATUS: self._device_status,
-            ATTR_NB_OPTIMIZERS: self._nb_optimizers,
-            ATTR_SYSTEM_TIME: self._system_time,
-        }
-        for i in range(int(self._nb_pv_strings)):
+        attribute_list = DYNAMIC_ATTR_LIST+STATIC_ATTR_LIST+STATIC_ATTR_GRID_LIST
+        attribute_list.append(ATTR_NB_PV_STRINGS)
+
+        if self._optimizers_installed:
+            attribute_list = attribute_list + [ATTR_NB_OPTIMIZERS, ATTR_NB_ONLINE_OPTIMIZERS]
+
+        if self._battery_installed:
+            attribute_list = attribute_list + BATTERY_ATTR_LIST
+
+        attributes = { key : self._attributes.get(key, None) for key in attribute_list}
+
+
+        for i in range(int(self._attributes[ATTR_NB_PV_STRINGS] or 0)):
             attributes[f"pv_string_{i+1:02}_voltage"] = self._pv_strings_voltage[i]
             attributes[f"pv_string_{i+1:02}_current"] = self._pv_strings_current[i]
 
-        if self._nb_optimizers:
-            attributes[ATTR_NB_ONLINE_OPTIMIZERS] = self._nb_online_optimizers
-
-        if self._battery_installed:
-            attributes[ATTR_STORAGE_RUNNING_STATUS] = self._storage_running_status
-            attributes[
-                ATTR_STORAGE_CHARGE_DISCHARGE_POWER
-            ] = self._storage_charge_discharge_power
-            attributes[
-                ATTR_STORAGE_CURRENT_DAY_CHARGE_CAPACITY
-            ] = self._storage_current_day_charge_capacity
-            attributes[
-                ATTR_STORAGE_CURRENT_DAY_DISCHARGE_CAPACITY
-            ] = self._storage_current_day_discharge_capacity
-            attributes[ATTR_STORAGE_WORKING_MODE_A] = self._storage_working_mode_a
-            attributes[ATTR_STORAGE_WORKING_MODE_B] = self._storage_working_mode_b
-            attributes[ATTR_STORAGE_TIME_OF_USE_PRICE] = self._storage_time_of_use_price
-            attributes[ATTR_STORAGE_LCOE] = self._storage_lcoe
-            attributes[
-                ATTR_STORAGE_MAXIMUM_CHARGING_POWER
-            ] = self._storage_maximum_charging_power
-            attributes[
-                ATTR_STORAGE_MAXIMUM_DISCHARGING_POWER
-            ] = self._storage_maximum_discharging_power
-            attributes[
-                ATTR_STORAGE_POWER_LIMIT_GRID_TIED_POINT
-            ] = self._storage_power_limit_grid_tied_point
-            attributes[
-                ATTR_STORAGE_CHARGING_CUTOFF_CAPACITY
-            ] = self._storage_charging_cutoff_capacity
-            attributes[
-                ATTR_STORAGE_DISCHARGING_CUTOFF_CAPACITY
-            ] = self._storage_discharging_cutoff_capacity
-            attributes[
-                ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_PERIOD
-            ] = self._storage_forced_charging_and_discharging_period
-            attributes[
-                ATTR_STORAGE_FORCED_CHARGING_AND_DISCHARGING_POWER
-            ] = self._storage_forced_charging_and_discharging_power
-            attributes[
-                ATTR_STORAGE_STATE_OF_CAPICITY
-            ] = self._storage_state_of_capacity
-            attributes[ATTR_STORAGE_TOTAL_CHARGE] = self._storage_total_charge
-            attributes[ATTR_STORAGE_TOTAL_DISCHARGE] = self._storage_total_discharge
         return attributes
 
     @property
     def unit_of_measurement(self):
         return self._unit
 
-    def update(self):
-        self._state = self._inverter.get("active_power").value
-        self._power_meter_active_power = self._inverter.get(
-            "power_meter_active_power"
-        ).value
-        self.input_power = self._inverter.get("input_power").value
-        self._daily_yield = self._inverter.get("daily_yield_energy").value
-        self._total_yield = self._inverter.get("accumulated_yield_energy").value
-        self._reactive_power = self._inverter.get("reactive_power").value
-        self._power_factor = self._inverter.get("power_factor").value
-        self._efficiency = self._inverter.get("efficiency").value
-        self._line_voltage_A_B = self._inverter.get("line_voltage_A_B").value
-        self._line_voltage_B_C = self._inverter.get("line_voltage_B_C").value
-        self._line_voltage_C_A = self._inverter.get("line_voltage_C_A").value
-        self._phase_A_voltage = self._inverter.get("phase_A_voltage").value
-        self._phase_B_voltage = self._inverter.get("phase_B_voltage").value
-        self._phase_C_voltage = self._inverter.get("phase_C_voltage").value
-        self._phase_A_current = self._inverter.get("phase_A_current").value
-        self._phase_B_current = self._inverter.get("phase_B_current").value
-        self._phase_C_current = self._inverter.get("phase_C_current").value
-        self._grid_voltage = self._line_voltage_A_B
-        self._grid_current = self._phase_A_current
-        self._grid_frequency = self._inverter.get("grid_frequency").value
-        self._grid_A_voltage = self._inverter.get("grid_A_voltage").value
-        self._grid_B_voltage = self._inverter.get("grid_B_voltage").value
-        self._grid_C_voltage = self._inverter.get("grid_C_voltage").value
-        self._active_grid_A_current = self._inverter.get("active_grid_A_current").value
-        self._active_grid_B_current = self._inverter.get("active_grid_B_current").value
-        self._active_grid_C_current = self._inverter.get("active_grid_C_current").value
-        self._active_grid_power_factor = self._inverter.get(
-            "active_grid_power_factor"
-        ).value
-        self._active_grid_frequency = self._inverter.get("active_grid_frequency").value
-        self._grid_exported_energy = self._inverter.get("grid_exported_energy").value
-        self._grid_accumulated_energy = self._inverter.get(
-            "grid_accumulated_energy"
-        ).value
-        self._active_grid_A_B_voltage = self._inverter.get(
-            "active_grid_A_B_voltage"
-        ).value
-        self._active_grid_B_C_voltage = self._inverter.get(
-            "active_grid_B_C_voltage"
-        ).value
-        self._active_grid_C_A_voltage = self._inverter.get(
-            "active_grid_C_A_voltage"
-        ).value
-        self._active_grid_A_power = self._inverter.get("active_grid_A_power").value
-        self._active_grid_B_power = self._inverter.get("active_grid_B_power").value
-        self._active_grid_C_power = self._inverter.get("active_grid_C_power").value
-        self._startup_time = self._inverter.get("startup_time").value.time()
-        self._shutdown_time = self._inverter.get("shutdown_time").value.time()
-        self._system_time = self._inverter.get("system_time").value
-        self._internal_temperature = self._inverter.get("internal_temperature").value
-        self._device_status = self._inverter.get("device_status").value
+    async def async_update(self):
+        # static values, we only need to get them once
+        for register in STATIC_ATTR_LIST:
+            if self._attributes.get(register, None) is None:
+                try:
+                    self._attributes[register] = (await self._inverter.get(register)).value
+                    _LOGGER.debug("set sensor name: %s", register)
+                except (ReadException, ConnectionException) as ex:
+                    _LOGGER.error("could not get register '%s': %s", register, ex)
 
-        if self._nb_optimizers:
-            self._nb_online_optimizers = self._inverter.get(
-                "nb_online_optimizers"
-            ).value
+        if self._attributes.get(STATIC_ATTR_GRID_LIST[0], None) is None:
+            try:
+                tmp = (await self._inverter.get(GRID_CODE_REGISTER)).value
+                self._attributes[STATIC_ATTR_GRID_LIST[0]] = tmp.standard
+                self._attributes[STATIC_ATTR_GRID_LIST[1]] = tmp.country
+            except (ReadException, ConnectionException) as ex:
+                _LOGGER.error("could not get register '%s': %s", GRID_CODE_REGISTER, ex)
+
+        self._name = self._attributes["model_name"] + "_" + self._attributes["serial_number"]
+
+        if self._optimizers_installed:
+            if self._attributes.get(ATTR_NB_OPTIMIZERS, None) is None:
+                try:
+                    self._attributes[ATTR_NB_OPTIMIZERS] = (await self._inverter.get(ATTR_NB_OPTIMIZERS)).value
+                    _LOGGER.debug("set sensor name: %s", ATTR_NB_OPTIMIZERS)
+                except (ReadException, ConnectionException) as ex:
+                    _LOGGER.error("could not get register '%s': %s", ATTR_NB_OPTIMIZERS, ex)
+            try:
+                self._attributes[ATTR_NB_ONLINE_OPTIMIZERS] = (await self._inverter.get(ATTR_NB_ONLINE_OPTIMIZERS)).value
+                _LOGGER.debug("set sensor name: %s", ATTR_NB_ONLINE_OPTIMIZERS)
+            except (ReadException, ConnectionException) as ex:
+                _LOGGER.error("could not get register '%s': %s", ATTR_NB_ONLINE_OPTIMIZERS, ex)
+        if self._attributes.get(ATTR_NB_PV_STRINGS, None) is None:
+            try:
+                self._attributes[ATTR_NB_PV_STRINGS] = (await self._inverter.get(ATTR_NB_PV_STRINGS)).value
+                self._pv_strings_voltage = [None] * self._attributes[ATTR_NB_PV_STRINGS]
+                self._pv_strings_current = [None] * self._attributes[ATTR_NB_PV_STRINGS]
+                _LOGGER.debug("set sensor name: %s", ATTR_NB_PV_STRINGS)
+            except (ReadException, ConnectionException) as ex:
+                _LOGGER.error("could not get register '%s': %s", ATTR_NB_PV_STRINGS, ex)
+
+        # dynamic values
+        try:
+            self._state = (await self._inverter.get(STATE_REGISTER)).value
+            self._available = True
+        except (ReadException, ConnectionException) as ex:
+            self._available = False
+            _LOGGER.error("could not get register '%s': %s", STATE_REGISTER, ex)
+
+        for register in DYNAMIC_ATTR_LIST:
+            try:
+                self._attributes[register] = (await self._inverter.get(register)).value
+                _LOGGER.debug("set sensor name: %s", register)
+            except (ReadException, ConnectionException) as ex:
+                _LOGGER.error("could not get register '%s': %s", register, ex)
+
+
+        for i in range(int(self._attributes[ATTR_NB_PV_STRINGS] or 0)):
+            try:
+                self._pv_strings_voltage[i] = (await self._inverter.get(
+                    f"pv_{i+1:02}_voltage"
+                )).value
+                self._pv_strings_current[i] = (await self._inverter.get(
+                    f"pv_{i+1:02}_current"
+                )).value
+            except (ReadException, ConnectionException) as ex:
+                _LOGGER.error("could not get register %s", ex)
+
+
+        # values for other entity sensors
+        # Asynchronously calling update from a different sensors does not work
+        for register in ENTITY_SENSOR_LIST:
+            try:
+                self.sensor_states[register] = (await self._inverter.get(register)).value
+                _LOGGER.debug("set sensor name: %s", register)
+            except (ReadException, ConnectionException) as ex:
+                _LOGGER.error("could not get register '%s': %s", register, ex)
 
         if self._battery_installed:
-            self._storage_running_status = self._inverter.get("storage_running_status").value
-            self._storage_charge_discharge_power = self._inverter.get(
-                "storage_charge_discharge_power"
-            ).value
-            self._storage_current_day_charge_capacity = self._inverter.get(
-                "storage_current_day_charge_capacity"
-            ).value
-            self._storage_current_day_discharge_capacity = self._inverter.get(
-                "storage_current_day_discharge_capacity"
-            ).value
-            self._storage_working_mode_a = self._inverter.get(
-                "storage_working_mode_a"
-            ).value
-            self._storage_working_mode_b = self._inverter.get(
-                ATTR_STORAGE_WORKING_MODE_B
-            ).value
-            self._storage_time_of_use_price = self._inverter.get(
-                "storage_time_of_use_price"
-            ).value
-            self._storage_lcoe = self._inverter.get("storage_lcoe").value
-            self._storage_maximum_charging_power = self._inverter.get(
-                "storage_maximum_charging_power"
-            ).value
-            self._storage_maximum_discharging_power = self._inverter.get(
-                "storage_maximum_discharging_power"
-            ).value
-            self._storage_power_limit_grid_tied_point = self._inverter.get(
-                "storage_power_limit_grid_tied_point"
-            ).value
-            self._storage_charging_cutoff_capacity = self._inverter.get(
-                "storage_charging_cutoff_capacity"
-            ).value
-            self._storage_discharging_cutoff_capacity = self._inverter.get(
-                "storage_discharging_cutoff_capacity"
-            ).value
-            self._storage_forced_charging_and_discharging_period = self._inverter.get(
-                "storage_forced_charging_and_discharging_period"
-            ).value
-            self._storage_forced_charging_and_discharging_power = self._inverter.get(
-                "storage_forced_charging_and_discharging_power"
-            ).value
-            self._storage_state_of_capacity = self._inverter.get(
-                ATTR_STORAGE_STATE_OF_CAPICITY
-            ).value
-            self._storage_total_charge = self._inverter.get(
-                "storage_total_charge"
-            ).value
-            self._storage_total_discharge = self._inverter.get(
-                "storage_total_discharge"
-            ).value
+            for register in ENTITY_SENSOR_LIST:
+                try:
+                    self.sensor_states[register] = (await self._inverter.get(register)).value
+                    _LOGGER.debug("set sensor name: %s", register)
+                except (ReadException, ConnectionException) as ex:
+                    _LOGGER.error("could not get register '%s': %s", register, ex)
 
-        self._day_active_power_peak = self._inverter.get("day_active_power_peak").value
-        for i in range(int(self._nb_pv_strings)):
-            self._pv_strings_voltage[i] = self._inverter.get(
-                f"pv_{i+1:02}_voltage"
-            ).value
-            self._pv_strings_current[i] = self._inverter.get(
-                f"pv_{i+1:02}_current"
-            ).value
+
+class HuaweiSolarEntitySensor(Entity):
+    def __init__(
+        self, inverter, unit, icon, device_class, parent_sensor, register, name_suffix=None):
+        self._inverter = inverter
+        self._hidden = False
+        self._available = False
+        self._unit = unit
+        self._icon = icon
+        self._parent_sensor = parent_sensor
+        self._register = register
+        if name_suffix:
+            self._name = name_suffix
+        else:
+            self._name = register
+        self._device_class = device_class
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def icon(self):
+        return self._icon
+
+    @property
+    def state(self):
+        return self._parent_sensor.sensor_states.get(self._register, None)
+
+    @property
+    def unit_of_measurement(self):
+        return self._unit
+
+    @property
+    def device_state_attributes(self):
+        return {
+            ATTR_STATE_CLASS: STATE_CLASS_MEASUREMENT,
+        }
+
+    @property
+    def device_class(self):
+        return self._device_class
+
+    @property
+    def available(self):
+        """Return True if entity is available."""
+        return self._parent_sensor.available
+
+
+class HuaweiSolarDailyYieldSensor(HuaweiSolarEntitySensor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    @property
+    def device_state_attributes(self):
+        system_time = self._parent_sensor._attributes.get("system_time", None)
+        if system_time is not None:
+            last_reset = system_time.replace(
+                    hour=0, minute=0, second=0)
+        else:
+            last_reset = None
+
+        return {
+            **super().device_state_attributes,
+            ATTR_LAST_RESET: last_reset,
+        }
+
+
+class HuaweiSolarTotalYieldSensor(HuaweiSolarEntitySensor):
+    @property
+    def device_state_attributes(self):
+        return {
+            **super().device_state_attributes,
+            ATTR_LAST_RESET: utc_from_timestamp(0),
+        }
