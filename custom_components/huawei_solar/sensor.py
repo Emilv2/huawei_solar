@@ -31,15 +31,17 @@ CONF_SLAVE = "slave"
 
 STATE_REGISTER = "active_power"
 
-GRID_CODE_REGISTER = "grid_code"
+ATTR_GRID_CODE = "grid_code"
+ATTR_SERIAL_NUMBER = "serial_number"
 ATTR_NB_PV_STRINGS = "nb_pv_strings"
 
 
 STATIC_ATTR_LIST = [
 "model_id",
 "model_name",
-"serial_number",
+ATTR_SERIAL_NUMBER,
 "rated_power",
+ATTR_NB_PV_STRINGS,
 ]
 
 STATIC_ATTR_GRID_LIST = [
@@ -89,14 +91,12 @@ DYNAMIC_ATTR_LIST = [
 "system_time",
 ]
 
-GRID_CODE_REGISTER = "grid_code"
-
-DAILY_YIELD_REGISTER = "daily_yield_energy"
-ACCUMULATED_YIELD_REGISTER = "accumulated_yield_energy"
+ATTR_DAILY_YIELD = "daily_yield_energy"
+ATTR_ACCUMULATED_YIELD = "accumulated_yield_energy"
 
 ENTITY_SENSOR_LIST = [
-        DAILY_YIELD_REGISTER,
-        ACCUMULATED_YIELD_REGISTER,
+        ATTR_DAILY_YIELD,
+        ATTR_ACCUMULATED_YIELD,
         ]
 
 
@@ -104,14 +104,14 @@ ATTR_NB_OPTIMIZERS = "nb_optimizers"
 ATTR_NB_ONLINE_OPTIMIZERS = "nb_online_optimizers"
 
 
-STORAGE_CHARGE_DISCHARGE_POWER_REGISTER = "storage_charge_discharge_power"
-STORAGE_TOTAL_CHARGE_REGISTER = "storage_total_charge"
-STORAGE_TOTAL_DISCHARGE_REGISTER = "storage_total_discharge"
+ATTR_STORAGE_CHARGE_DISCHARGE_POWER = "storage_charge_discharge_power"
+ATTR_STORAGE_TOTAL_CHARGE = "storage_total_charge"
+ATTR_STORAGE_TOTAL_DISCHARGE = "storage_total_discharge"
 
 BATTERY_ENTITY_SENSOR_LIST = [
-STORAGE_CHARGE_DISCHARGE_POWER_REGISTER,
-STORAGE_TOTAL_CHARGE_REGISTER,
-STORAGE_TOTAL_DISCHARGE_REGISTER,
+ATTR_STORAGE_CHARGE_DISCHARGE_POWER,
+ATTR_STORAGE_TOTAL_CHARGE,
+ATTR_STORAGE_TOTAL_DISCHARGE,
         ]
 
 
@@ -147,17 +147,41 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     """Create the sensor."""
     _LOGGER.debug("Setup Huawei Inverter")
 
+    static_attributes = {}
+
     try:
         inverter = AsyncHuaweiSolar(host=config[CONF_HOST], loop=hass.loop, slave=config[CONF_SLAVE])
-    except Exception as ex:
+
+        for register in STATIC_ATTR_LIST:
+            static_attributes[register] = (await inverter.get(register)).value
+            _LOGGER.debug("get sensor static attribute: %s", register)
+
+        register = ATTR_GRID_CODE
+        tmp = (await inverter.get(register)).value
+        _LOGGER.debug("get sensor static attribute: %s", register)
+        static_attributes[STATIC_ATTR_GRID_LIST[0]] = tmp.standard
+        static_attributes[STATIC_ATTR_GRID_LIST[1]] = tmp.country
+
+        if config[CONF_OPTIMIZERS]:
+            register = ATTR_NB_OPTIMIZERS
+            static_attributes[register] = (await inverter.get(register)).value
+            _LOGGER.debug("get sensor static attribute: %s", register)
+
+    except ConnectionException as ex:
         _LOGGER.error("could not connect to Huawei inverter: %s", ex)
         return False
+
+    except ReadException as ex:
+        _LOGGER.error("could not get register '%s': %s", register, ex)
+        return False
+
     _LOGGER.debug("created inverter")
 
     huawei_solar_sensor = HuaweiSolarSensor(
         inverter=inverter,
         optimizers_installed=config[CONF_OPTIMIZERS],
         battery_installed=config[CONF_BATTERY],
+        static_attributes=static_attributes,
     )
 
 
@@ -169,8 +193,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             icon="mdi:solar-power",
             device_class=DEVICE_CLASS_ENERGY,
             parent_sensor=huawei_solar_sensor,
-            register=DAILY_YIELD_REGISTER,
-            name_suffix="daily_yield",
+            register=ATTR_DAILY_YIELD,
+            name_prefix="daily_yield",
         ),
         HuaweiSolarTotalYieldSensor(
             inverter=inverter,
@@ -178,8 +202,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             icon="mdi:solar-power",
             device_class=DEVICE_CLASS_ENERGY,
             parent_sensor=huawei_solar_sensor,
-            register=ACCUMULATED_YIELD_REGISTER,
-            name_suffix="total_yield",
+            register=ATTR_ACCUMULATED_YIELD,
+            name_prefix="total_yield",
         ),
     ]
 
@@ -192,7 +216,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                     icon="mdi:solar-power",
                     device_class=DEVICE_CLASS_POWER,
                     parent_sensor=huawei_solar_sensor,
-                    register=STORAGE_CHARGE_DISCHARGE_POWER_REGISTER,
+                    register=ATTR_STORAGE_CHARGE_DISCHARGE_POWER,
                 ),
                 HuaweiSolarTotalYieldSensor(
                     inverter=inverter,
@@ -200,7 +224,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                     icon="mdi:solar-power",
                     device_class=DEVICE_CLASS_ENERGY,
                     parent_sensor=huawei_solar_sensor,
-                    register=STORAGE_TOTAL_CHARGE_REGISTER,
+                    register=ATTR_STORAGE_TOTAL_CHARGE,
                 ),
                 HuaweiSolarTotalYieldSensor(
                     inverter=inverter,
@@ -208,7 +232,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                     icon="mdi:solar-power",
                     device_class=DEVICE_CLASS_ENERGY,
                     parent_sensor=huawei_solar_sensor,
-                    register=STORAGE_TOTAL_DISCHARGE_REGISTER,
+                    register=ATTR_STORAGE_TOTAL_DISCHARGE,
                 ),
             ]
         )
@@ -218,7 +242,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 
 class HuaweiSolarSensor(Entity):
-    def __init__(self, inverter, optimizers_installed, battery_installed):
+    def __init__(self, inverter, optimizers_installed, battery_installed, static_attributes):
         self._inverter = inverter
         self._optimizers_installed = optimizers_installed
         self._battery_installed = battery_installed
@@ -227,14 +251,22 @@ class HuaweiSolarSensor(Entity):
         self._icon = "mdi:solar-power"
         self._available = False
         self._state = None
-        self._name = None
         self.sensor_states = {}
-        self._attributes = {}
+        self._attributes = static_attributes
+        self._name = self._attributes["model_name"] + "_" + self._attributes["serial_number"]
+        self._unique_id = self._name
+        self._pv_strings_voltage = [None] * self._attributes[ATTR_NB_PV_STRINGS]
+        self._pv_strings_current = [None] * self._attributes[ATTR_NB_PV_STRINGS]
 
     @property
     def available(self):
         """Return True if entity is available."""
         return self._available
+
+    @property
+    def unique_id(self):
+        """Unique ID of the Huawei Solar sensor"""
+        return self._unique_id
 
     @property
     def name(self):
@@ -277,47 +309,6 @@ class HuaweiSolarSensor(Entity):
         return self._unit
 
     async def async_update(self):
-        # static values, we only need to get them once
-        for register in STATIC_ATTR_LIST:
-            if self._attributes.get(register, None) is None:
-                try:
-                    self._attributes[register] = (await self._inverter.get(register)).value
-                    _LOGGER.debug("set sensor name: %s", register)
-                except (ReadException, ConnectionException) as ex:
-                    _LOGGER.error("could not get register '%s': %s", register, ex)
-
-        if self._attributes.get(STATIC_ATTR_GRID_LIST[0], None) is None:
-            try:
-                tmp = (await self._inverter.get(GRID_CODE_REGISTER)).value
-                self._attributes[STATIC_ATTR_GRID_LIST[0]] = tmp.standard
-                self._attributes[STATIC_ATTR_GRID_LIST[1]] = tmp.country
-            except (ReadException, ConnectionException) as ex:
-                _LOGGER.error("could not get register '%s': %s", GRID_CODE_REGISTER, ex)
-
-        self._name = self._attributes["model_name"] + "_" + self._attributes["serial_number"]
-
-        if self._optimizers_installed:
-            if self._attributes.get(ATTR_NB_OPTIMIZERS, None) is None:
-                try:
-                    self._attributes[ATTR_NB_OPTIMIZERS] = (await self._inverter.get(ATTR_NB_OPTIMIZERS)).value
-                    _LOGGER.debug("set sensor name: %s", ATTR_NB_OPTIMIZERS)
-                except (ReadException, ConnectionException) as ex:
-                    _LOGGER.error("could not get register '%s': %s", ATTR_NB_OPTIMIZERS, ex)
-            try:
-                self._attributes[ATTR_NB_ONLINE_OPTIMIZERS] = (await self._inverter.get(ATTR_NB_ONLINE_OPTIMIZERS)).value
-                _LOGGER.debug("set sensor name: %s", ATTR_NB_ONLINE_OPTIMIZERS)
-            except (ReadException, ConnectionException) as ex:
-                _LOGGER.error("could not get register '%s': %s", ATTR_NB_ONLINE_OPTIMIZERS, ex)
-        if self._attributes.get(ATTR_NB_PV_STRINGS, None) is None:
-            try:
-                self._attributes[ATTR_NB_PV_STRINGS] = (await self._inverter.get(ATTR_NB_PV_STRINGS)).value
-                self._pv_strings_voltage = [None] * self._attributes[ATTR_NB_PV_STRINGS]
-                self._pv_strings_current = [None] * self._attributes[ATTR_NB_PV_STRINGS]
-                _LOGGER.debug("set sensor name: %s", ATTR_NB_PV_STRINGS)
-            except (ReadException, ConnectionException) as ex:
-                _LOGGER.error("could not get register '%s': %s", ATTR_NB_PV_STRINGS, ex)
-
-        # dynamic values
         try:
             self._state = (await self._inverter.get(STATE_REGISTER)).value
             self._available = True
@@ -328,10 +319,8 @@ class HuaweiSolarSensor(Entity):
         for register in DYNAMIC_ATTR_LIST:
             try:
                 self._attributes[register] = (await self._inverter.get(register)).value
-                _LOGGER.debug("set sensor name: %s", register)
             except (ReadException, ConnectionException) as ex:
                 _LOGGER.error("could not get register '%s': %s", register, ex)
-
 
         for i in range(int(self._attributes[ATTR_NB_PV_STRINGS] or 0)):
             try:
@@ -344,13 +333,17 @@ class HuaweiSolarSensor(Entity):
             except (ReadException, ConnectionException) as ex:
                 _LOGGER.error("could not get register %s", ex)
 
+        if self._optimizers_installed:
+            try:
+                self._attributes[ATTR_NB_ONLINE_OPTIMIZERS] = (await self._inverter.get(ATTR_NB_ONLINE_OPTIMIZERS)).value
+            except (ReadException, ConnectionException) as ex:
+                _LOGGER.error("could not get register '%s': %s", ATTR_NB_ONLINE_OPTIMIZERS, ex)
 
         # values for other entity sensors
         # Asynchronously calling update from a different sensors does not work
         for register in ENTITY_SENSOR_LIST:
             try:
                 self.sensor_states[register] = (await self._inverter.get(register)).value
-                _LOGGER.debug("set sensor name: %s", register)
             except (ReadException, ConnectionException) as ex:
                 _LOGGER.error("could not get register '%s': %s", register, ex)
 
@@ -358,14 +351,13 @@ class HuaweiSolarSensor(Entity):
             for register in ENTITY_SENSOR_LIST:
                 try:
                     self.sensor_states[register] = (await self._inverter.get(register)).value
-                    _LOGGER.debug("set sensor name: %s", register)
                 except (ReadException, ConnectionException) as ex:
                     _LOGGER.error("could not get register '%s': %s", register, ex)
 
 
 class HuaweiSolarEntitySensor(Entity):
     def __init__(
-        self, inverter, unit, icon, device_class, parent_sensor, register, name_suffix=None):
+        self, inverter, unit, icon, device_class, parent_sensor, register, name_prefix=None):
         self._inverter = inverter
         self._hidden = False
         self._available = False
@@ -373,11 +365,17 @@ class HuaweiSolarEntitySensor(Entity):
         self._icon = icon
         self._parent_sensor = parent_sensor
         self._register = register
-        if name_suffix:
-            self._name = name_suffix
+        if name_prefix:
+            self._name = name_prefix + "_" + self._parent_sensor._attributes[ATTR_SERIAL_NUMBER]
         else:
-            self._name = register
+            self._name = register + "_" + self._parent_sensor._attributes[ATTR_SERIAL_NUMBER]
+        self._unique_id = self._name
         self._device_class = device_class
+
+    @property
+    def unique_id(self):
+        """Unique ID of the Huawei Solar entity sensor"""
+        return self._unique_id
 
     @property
     def name(self):
