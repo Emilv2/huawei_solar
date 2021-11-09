@@ -1,6 +1,7 @@
 import logging
-
+import asyncio
 import homeassistant.helpers.config_validation as cv
+from datetime import timedelta
 import voluptuous as vol
 from homeassistant.components.sensor import (
     PLATFORM_SCHEMA,
@@ -24,6 +25,14 @@ from homeassistant.util.dt import utc_from_timestamp
 from huawei_solar import AsyncHuaweiSolar, ReadException, ConnectionException
 
 _LOGGER = logging.getLogger(__name__)
+
+
+SCAN_INTERVAL = timedelta(seconds=60)
+
+# don't overload the poor thing
+DEFAULT_COOLDOWN_INTERVAL = 0.1
+# throttle reconnect attempts
+DEFAULT_RECONNECT_INTERVAL = 30
 
 CONF_OPTIMIZERS = "optimizers"
 CONF_BATTERY = "battery"
@@ -155,24 +164,29 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         for register in STATIC_ATTR_LIST:
             static_attributes[register] = (await inverter.get(register)).value
             _LOGGER.debug("get sensor static attribute: %s", register)
+            await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
 
         register = ATTR_GRID_CODE
         tmp = (await inverter.get(register)).value
         _LOGGER.debug("get sensor static attribute: %s", register)
         static_attributes[STATIC_ATTR_GRID_LIST[0]] = tmp.standard
         static_attributes[STATIC_ATTR_GRID_LIST[1]] = tmp.country
+        await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
 
         if config[CONF_OPTIMIZERS]:
             register = ATTR_NB_OPTIMIZERS
             static_attributes[register] = (await inverter.get(register)).value
             _LOGGER.debug("get sensor static attribute: %s", register)
+            await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
 
     except ConnectionException as ex:
         _LOGGER.error("could not connect to Huawei inverter: %s", ex)
+        await asyncio.sleep(DEFAULT_RECONNECT_INTERVAL)
         return False
 
     except ReadException as ex:
         _LOGGER.error("could not get register '%s': %s", register, ex)
+        await asyncio.sleep(DEFAULT_RECONNECT_INTERVAL)
         return False
 
     _LOGGER.debug("created inverter")
@@ -312,47 +326,72 @@ class HuaweiSolarSensor(Entity):
         try:
             self._state = (await self._inverter.get(STATE_REGISTER)).value
             self._available = True
+            await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
         except (ReadException, ConnectionException) as ex:
             self._available = False
             _LOGGER.error("could not get register '%s': %s", STATE_REGISTER, ex)
+            await asyncio.sleep(DEFAULT_RECONNECT_INTERVAL)
 
         for register in DYNAMIC_ATTR_LIST:
             try:
                 self._attributes[register] = (await self._inverter.get(register)).value
+                _LOGGER.debug("get register: %s", register)
+                await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
             except (ReadException, ConnectionException) as ex:
                 _LOGGER.error("could not get register '%s': %s", register, ex)
+                await asyncio.sleep(DEFAULT_RECONNECT_INTERVAL)
 
         for i in range(int(self._attributes[ATTR_NB_PV_STRINGS] or 0)):
             try:
-                self._pv_strings_voltage[i] = (await self._inverter.get(
-                    f"pv_{i+1:02}_voltage"
-                )).value
-                self._pv_strings_current[i] = (await self._inverter.get(
-                    f"pv_{i+1:02}_current"
-                )).value
+                self._pv_strings_voltage[i] = (
+                    register = f"pv_{i+1:02}_voltage"
+                    await self._inverter.get(register)
+                ).value
+                _LOGGER.debug("get register: %s", register)
+                await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
+                register = f"pv_{i+1:02}_current"
+                self._pv_strings_current[i] = (
+                    await self._inverter.get(register)
+                ).value
+                _LOGGER.debug("get register: %s", register)
+                await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
             except (ReadException, ConnectionException) as ex:
                 _LOGGER.error("could not get register %s", ex)
+                await asyncio.sleep(DEFAULT_RECONNECT_INTERVAL)
 
         if self._optimizers_installed:
             try:
                 self._attributes[ATTR_NB_ONLINE_OPTIMIZERS] = (await self._inverter.get(ATTR_NB_ONLINE_OPTIMIZERS)).value
+                _LOGGER.debug("get register: %s", register)
+                await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
             except (ReadException, ConnectionException) as ex:
                 _LOGGER.error("could not get register '%s': %s", ATTR_NB_ONLINE_OPTIMIZERS, ex)
+                await asyncio.sleep(DEFAULT_RECONNECT_INTERVAL)
 
         # values for other entity sensors
         # Asynchronously calling update from a different sensors does not work
         for register in ENTITY_SENSOR_LIST:
             try:
-                self.sensor_states[register] = (await self._inverter.get(register)).value
+                self.sensor_states[register] = (
+                    await self._inverter.get(register)
+                ).value
+                _LOGGER.debug("get register: %s", register)
+                await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
             except (ReadException, ConnectionException) as ex:
                 _LOGGER.error("could not get register '%s': %s", register, ex)
+                await asyncio.sleep(DEFAULT_RECONNECT_INTERVAL)
 
         if self._battery_installed:
             for register in ENTITY_SENSOR_LIST:
                 try:
-                    self.sensor_states[register] = (await self._inverter.get(register)).value
+                    self.sensor_states[register] = (
+                        await self._inverter.get(register)
+                    ).value
+                    _LOGGER.debug("get register: %s", register)
+                    await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
                 except (ReadException, ConnectionException) as ex:
                     _LOGGER.error("could not get register '%s': %s", register, ex)
+                    await asyncio.sleep(DEFAULT_RECONNECT_INTERVAL)
 
 
 class HuaweiSolarEntitySensor(Entity):
