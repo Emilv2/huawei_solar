@@ -343,8 +343,8 @@ class HuaweiSolarSensor(Entity):
 
         for i in range(int(self._attributes[ATTR_NB_PV_STRINGS] or 0)):
             try:
+                register = f"pv_{i+1:02}_voltage"
                 self._pv_strings_voltage[i] = (
-                    register = f"pv_{i+1:02}_voltage"
                     await self._inverter.get(register)
                 ).value
                 _LOGGER.debug("get register: %s", register)
