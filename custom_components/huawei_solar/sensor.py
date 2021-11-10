@@ -393,6 +393,17 @@ class HuaweiSolarSensor(Entity):
                     _LOGGER.error("could not get register '%s': %s", register, ex)
                     await asyncio.sleep(DEFAULT_RECONNECT_INTERVAL)
 
+            for register in BATTERY_ATTR_LIST:
+                try:
+                    self._attributes[register] = (
+                        await self._inverter.get(register)
+                    ).value
+                    _LOGGER.debug("get register: %s", register)
+                    await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
+                except (ReadException, ConnectionException) as ex:
+                    _LOGGER.error("could not get register '%s': %s", register, ex)
+                    await asyncio.sleep(DEFAULT_RECONNECT_INTERVAL)
+
 
 class HuaweiSolarEntitySensor(Entity):
     def __init__(
