@@ -382,7 +382,7 @@ class HuaweiSolarSensor(Entity):
                 await asyncio.sleep(DEFAULT_RECONNECT_INTERVAL)
 
         if self._battery_installed:
-            for register in ENTITY_SENSOR_LIST:
+            for register in BATTERY_ENTITY_SENSOR_LIST:
                 try:
                     self.sensor_states[register] = (
                         await self._inverter.get(register)
