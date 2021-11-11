@@ -31,3 +31,10 @@ sensor:
     battery: true
     slave: 1
 ```
+
+## Breaking Changes
+
+### `1.0.0`
+
+- Sensors names now include the serial number. If you have existing templates/lovelace/automations you should update those to the new name or use the UI to change the name back to the old name.
+- the `daily_yield`, `total_yield`, `storage_charge_discharge_power`, `storage_total_charge` and `storage_total_discharge` are now separate sensors instead of attributes.
