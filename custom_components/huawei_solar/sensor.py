@@ -37,6 +37,7 @@ DEFAULT_RECONNECT_INTERVAL = 30
 CONF_OPTIMIZERS = "optimizers"
 CONF_BATTERY = "battery"
 CONF_SLAVE = "slave"
+CONF_PORT = "port"
 
 STATE_REGISTER = "active_power"
 
@@ -148,6 +149,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_OPTIMIZERS, default=False): cv.boolean,
         vol.Optional(CONF_BATTERY, default=False): cv.boolean,
         vol.Optional(CONF_SLAVE, default=0): int,
+        vol.Optional(CONF_PORT, default=502): int,
     }
 )
 
@@ -160,7 +162,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     try:
         inverter = AsyncHuaweiSolar(
-            host=config[CONF_HOST], loop=hass.loop, slave=config[CONF_SLAVE]
+            host=config[CONF_HOST], port=config[CONF_PORT], loop=hass.loop, slave=config[CONF_SLAVE]
         )
 
         for register in STATIC_ATTR_LIST:

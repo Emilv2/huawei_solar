@@ -20,6 +20,7 @@ Then configure the sensors by setting up the huawei_solar platform in `configura
 | optimizers | boolean | **Optional** | Set to true if you have optimizers and want to see information about them.
 | battery | boolean | **Optional** | Set to true if you have a battery and want to see information about it.
 | slave | int | **Optional** | Set the slave unit, set `slave = 1` when using the dongle.
+| port | int | **Optional** | Set the inverter ModBus TCP port 
 
 **Example:**
 
@@ -30,6 +31,7 @@ sensor:
     optimizers: true
     battery: true
     slave: 1
+    port: 6607
 ```
 
 ## Breaking Changes
