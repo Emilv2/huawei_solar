@@ -306,7 +306,7 @@ class HuaweiSolarSensor(Entity):
         return DEVICE_CLASS_POWER
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         attribute_list = DYNAMIC_ATTR_LIST + STATIC_ATTR_LIST + STATIC_ATTR_GRID_LIST
         attribute_list.append(ATTR_NB_PV_STRINGS)
 
@@ -465,7 +465,7 @@ class HuaweiSolarEntitySensor(Entity):
         return self._unit
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         return {
             ATTR_STATE_CLASS: STATE_CLASS_MEASUREMENT,
         }
@@ -485,7 +485,7 @@ class HuaweiSolarDailyYieldSensor(HuaweiSolarEntitySensor):
         super().__init__(*args, **kwargs)
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         system_time = self._parent_sensor._attributes.get("system_time", None)
         if system_time is not None:
             last_reset = system_time.replace(hour=0, minute=0, second=0)
@@ -493,15 +493,15 @@ class HuaweiSolarDailyYieldSensor(HuaweiSolarEntitySensor):
             last_reset = None
 
         return {
-            **super().device_state_attributes,
+            **super().extra_state_attributes,
             ATTR_LAST_RESET: last_reset,
         }
 
 
 class HuaweiSolarTotalYieldSensor(HuaweiSolarEntitySensor):
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         return {
-            **super().device_state_attributes,
+            **super().extra_state_attributes,
             ATTR_LAST_RESET: utc_from_timestamp(0),
         }
