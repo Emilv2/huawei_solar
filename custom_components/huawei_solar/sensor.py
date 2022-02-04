@@ -9,6 +9,7 @@ from homeassistant.components.sensor import (
     ATTR_STATE_CLASS,
     PLATFORM_SCHEMA,
     STATE_CLASS_MEASUREMENT,
+    STATE_CLASS_TOTAL_INCREASING,
 )
 from homeassistant.const import (
     CONF_HOST,
@@ -103,10 +104,14 @@ DYNAMIC_ATTR_LIST = [
 
 ATTR_DAILY_YIELD = "daily_yield_energy"
 ATTR_ACCUMULATED_YIELD = "accumulated_yield_energy"
+ATTR_GRID_EXPORTED = "grid_exported_energy"
+ATTR_GRID_ACCUMULATED = "grid_accumulated_energy"
 
 ENTITY_SENSOR_LIST = [
     ATTR_DAILY_YIELD,
     ATTR_ACCUMULATED_YIELD,
+    ATTR_GRID_EXPORTED,
+    ATTR_GRID_ACCUMULATED,
 ]
 
 
@@ -212,8 +217,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             parent_sensor=huawei_solar_sensor,
             register=ATTR_DAILY_YIELD,
             name_prefix="daily_yield",
+            state_class=STATE_CLASS_MEASUREMENT,
         ),
-        HuaweiSolarTotalYieldSensor(
+        HuaweiSolarEntitySensor(
             inverter=inverter,
             unit=ENERGY_KILO_WATT_HOUR,
             icon="mdi:solar-power",
@@ -221,6 +227,24 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             parent_sensor=huawei_solar_sensor,
             register=ATTR_ACCUMULATED_YIELD,
             name_prefix="total_yield",
+        ),
+        HuaweiSolarEntitySensor(
+            inverter=inverter,
+            unit=ENERGY_KILO_WATT_HOUR,
+            icon="mdi:solar-power",
+            device_class=DEVICE_CLASS_ENERGY,
+            parent_sensor=huawei_solar_sensor,
+            register=ATTR_GRID_EXPORTED,
+            name_prefix="grid_exported",
+        ),
+        HuaweiSolarEntitySensor(
+            inverter=inverter,
+            unit=ENERGY_KILO_WATT_HOUR,
+            icon="mdi:solar-power",
+            device_class=DEVICE_CLASS_ENERGY,
+            parent_sensor=huawei_solar_sensor,
+            register=ATTR_GRID_ACCUMULATED,
+            name_prefix="grid_accumulated",
         ),
     ]
 
@@ -235,7 +259,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                     parent_sensor=huawei_solar_sensor,
                     register=ATTR_STORAGE_CHARGE_DISCHARGE_POWER,
                 ),
-                HuaweiSolarTotalYieldSensor(
+                HuaweiSolarEntitySensor(
                     inverter=inverter,
                     unit=ENERGY_KILO_WATT_HOUR,
                     icon="mdi:solar-power",
@@ -243,7 +267,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                     parent_sensor=huawei_solar_sensor,
                     register=ATTR_STORAGE_TOTAL_CHARGE,
                 ),
-                HuaweiSolarTotalYieldSensor(
+                HuaweiSolarEntitySensor(
                     inverter=inverter,
                     unit=ENERGY_KILO_WATT_HOUR,
                     icon="mdi:solar-power",
@@ -424,6 +448,7 @@ class HuaweiSolarEntitySensor(Entity):
         parent_sensor,
         register,
         name_prefix=None,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
     ):
         self._inverter = inverter
         self._hidden = False
@@ -442,6 +467,7 @@ class HuaweiSolarEntitySensor(Entity):
             )
         self._unique_id = self._name
         self._device_class = device_class
+        self._state_class = state_class
 
     @property
     def unique_id(self):
@@ -467,7 +493,7 @@ class HuaweiSolarEntitySensor(Entity):
     @property
     def extra_state_attributes(self):
         return {
-            ATTR_STATE_CLASS: STATE_CLASS_MEASUREMENT,
+            ATTR_STATE_CLASS: self._state_class,
         }
 
     @property
@@ -495,13 +521,4 @@ class HuaweiSolarDailyYieldSensor(HuaweiSolarEntitySensor):
         return {
             **super().extra_state_attributes,
             ATTR_LAST_RESET: last_reset,
-        }
-
-
-class HuaweiSolarTotalYieldSensor(HuaweiSolarEntitySensor):
-    @property
-    def extra_state_attributes(self):
-        return {
-            **super().extra_state_attributes,
-            ATTR_LAST_RESET: utc_from_timestamp(0),
         }
