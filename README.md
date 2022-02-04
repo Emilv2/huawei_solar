@@ -20,6 +20,7 @@ Then configure the sensors by setting up the huawei_solar platform in `configura
 | optimizers | boolean | **Optional** | Set to true if you have optimizers and want to see information about them.
 | battery | boolean | **Optional** | Set to true if you have a battery and want to see information about it.
 | slave | int | **Optional** | Set the slave unit, set `slave = 1` when using the dongle.
+| port | int | **Optional** | Set the inverter ModBus TCP port 
 
 **Example:**
 
@@ -30,7 +31,20 @@ sensor:
     optimizers: true
     battery: true
     slave: 1
+    port: 6607
 ```
+
+## Troubleshooting
+
+If you are using the SDongle to communicate with your inverter, make sure the following conditions are met
+
+- Dongle Firmware must be at least at version SPC123 (You can ask the support to update yours remotely, provide your dongle SN. Alternatively obtain the firmware file from support and install it through the App by connecting to the Dongle management Wi-Fi (available for 3 minutes after startup).)
+- In the Dongle settings (Settings/Communication settings/Dongle Configuration, log in as installer to the inverter), make sure to set Modbus-TCP to Enable(unrestricted) or set an allowed IP if using restricted mode
+- According to the [Modbus TCP Guide](https://forum.huawei.com/enterprise/en/modbus-tcp-guide/thread/789585-100027), the inverter needs at least version SPC139
+- set `slave: 1` as described above
+- Make sure no other client is accessing the Modbus TCP interface
+
+If it is still not working after that, restart the inverter and try again.
 
 ## Breaking Changes
 

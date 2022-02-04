@@ -38,6 +38,7 @@ DEFAULT_RECONNECT_INTERVAL = 30
 CONF_OPTIMIZERS = "optimizers"
 CONF_BATTERY = "battery"
 CONF_SLAVE = "slave"
+CONF_PORT = "port"
 
 STATE_REGISTER = "active_power"
 
@@ -153,6 +154,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_OPTIMIZERS, default=False): cv.boolean,
         vol.Optional(CONF_BATTERY, default=False): cv.boolean,
         vol.Optional(CONF_SLAVE, default=0): int,
+        vol.Optional(CONF_PORT, default=502): int,
     }
 )
 
@@ -165,7 +167,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     try:
         inverter = AsyncHuaweiSolar(
-            host=config[CONF_HOST], loop=hass.loop, slave=config[CONF_SLAVE]
+            host=config[CONF_HOST], port=config[CONF_PORT], loop=hass.loop, slave=config[CONF_SLAVE]
         )
 
         for register in STATIC_ATTR_LIST:
@@ -328,7 +330,7 @@ class HuaweiSolarSensor(Entity):
         return DEVICE_CLASS_POWER
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         attribute_list = DYNAMIC_ATTR_LIST + STATIC_ATTR_LIST + STATIC_ATTR_GRID_LIST
         attribute_list.append(ATTR_NB_PV_STRINGS)
 
@@ -489,7 +491,7 @@ class HuaweiSolarEntitySensor(Entity):
         return self._unit
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         return {
             ATTR_STATE_CLASS: self._state_class,
         }
@@ -509,7 +511,7 @@ class HuaweiSolarDailyYieldSensor(HuaweiSolarEntitySensor):
         super().__init__(*args, **kwargs)
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         system_time = self._parent_sensor._attributes.get("system_time", None)
         if system_time is not None:
             last_reset = system_time.replace(hour=0, minute=0, second=0)
@@ -517,8 +519,6 @@ class HuaweiSolarDailyYieldSensor(HuaweiSolarEntitySensor):
             last_reset = None
 
         return {
-            **super().device_state_attributes,
+            **super().extra_state_attributes,
             ATTR_LAST_RESET: last_reset,
         }
-
-
