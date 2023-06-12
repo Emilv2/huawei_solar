@@ -4,6 +4,6 @@
   "documentation": "https://github.com/Emilv2/huawei_solar",
   "dependencies": [],
   "codeowners": ["Emilv2"],
-  "requirements": ["huawei-solar>=1.2.0,<2.0.0"],
+  "requirements": ["huawei-solar>=2.0.0,<=2.2.6"],
   "version": "1.2.4"
 }
