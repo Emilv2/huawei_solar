@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
 from homeassistant.const import (
     CONF_HOST,
     UnitOfEnergy,
+    UnitOfPower,
 )
 from homeassistant.helpers.entity import Entity
 from homeassistant.util.dt import utc_from_timestamp
