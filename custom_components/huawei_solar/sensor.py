@@ -36,6 +36,7 @@ DEFAULT_COOLDOWN_INTERVAL = 0.1
 DEFAULT_RECONNECT_INTERVAL = 30
 
 CONF_OPTIMIZERS = "optimizers"
+CONF_NAME = "name"
 CONF_BATTERY = "battery"
 CONF_SLAVE = "slave"
 CONF_PORT = "port"
@@ -78,7 +79,8 @@ DYNAMIC_ATTR_LIST = [
     "phase_B_current",
     "phase_C_current",
     "power_meter_active_power",
-    "input_power",
+    "input_power", # Total input power
+    "active_power",
     "grid_A_voltage",
     "grid_B_voltage",
     "grid_C_voltage",
@@ -87,6 +89,8 @@ DYNAMIC_ATTR_LIST = [
     "active_grid_C_current",
     "active_grid_power_factor",
     "active_grid_frequency",
+    "daily_yield_energy",
+    "accumulated_yield_energy",
     "grid_exported_energy",
     "grid_accumulated_energy",
     "active_grid_A_B_voltage",
@@ -155,6 +159,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_BATTERY, default=False): cv.boolean,
         vol.Optional(CONF_SLAVE, default=0): int,
         vol.Optional(CONF_PORT, default=502): int,
+        vol.Optional(CONF_NAME, default=''): cv.string,
     }
 )
 
@@ -166,14 +171,16 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     static_attributes = {}
 
     try:
-        inverter = AsyncHuaweiSolar(
-            host=config[CONF_HOST], port=config[CONF_PORT], loop=hass.loop, slave=config[CONF_SLAVE]
+        inverter = await AsyncHuaweiSolar.create(
+            host=config[CONF_HOST], port=config[CONF_PORT], slave=config[CONF_SLAVE]
         )
 
         for register in STATIC_ATTR_LIST:
             static_attributes[register] = (await inverter.get(register)).value
             _LOGGER.debug("get sensor static attribute: %s", register)
             await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
+        if config[CONF_NAME]:
+            static_attributes["model_name"] = config[CONF_NAME]
 
         register = ATTR_GRID_CODE
         tmp = (await inverter.get(register)).value
@@ -216,7 +223,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             device_class=DEVICE_CLASS_ENERGY,
             parent_sensor=huawei_solar_sensor,
             register=ATTR_DAILY_YIELD,
-            name_prefix="daily_yield",
+            name_prefix=static_attributes["model_name"] + "_daily_yield",
             state_class=STATE_CLASS_MEASUREMENT,
         ),
         HuaweiSolarEntitySensor(
@@ -226,7 +233,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             device_class=DEVICE_CLASS_ENERGY,
             parent_sensor=huawei_solar_sensor,
             register=ATTR_ACCUMULATED_YIELD,
-            name_prefix="total_yield",
+            name_prefix=static_attributes["model_name"] +"_total_yield",
         ),
         HuaweiSolarEntitySensor(
             inverter=inverter,
@@ -235,7 +242,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             device_class=DEVICE_CLASS_ENERGY,
             parent_sensor=huawei_solar_sensor,
             register=ATTR_GRID_EXPORTED,
-            name_prefix="grid_exported",
+            name_prefix=static_attributes["model_name"] + "_grid_exported",
         ),
         HuaweiSolarEntitySensor(
             inverter=inverter,
@@ -244,7 +251,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             device_class=DEVICE_CLASS_ENERGY,
             parent_sensor=huawei_solar_sensor,
             register=ATTR_GRID_ACCUMULATED,
-            name_prefix="grid_accumulated",
+            name_prefix=static_attributes["model_name"] + "_grid_accumulated",
         ),
     ]
 
@@ -297,7 +304,7 @@ class HuaweiSolarSensor(Entity):
         self.sensor_states = {}
         self._attributes = static_attributes
         self._name = (
-            self._attributes["model_name"] + "_" + self._attributes["serial_number"]
+            self._attributes["model_name"] # + "_" + self._attributes["serial_number"]
         )
         self._unique_id = self._name
         self._pv_strings_voltage = [None] * self._attributes[ATTR_NB_PV_STRINGS]
@@ -368,7 +375,7 @@ class HuaweiSolarSensor(Entity):
         for register in DYNAMIC_ATTR_LIST:
             try:
                 self._attributes[register] = (await self._inverter.get(register)).value
-                _LOGGER.debug("get register: %s", register)
+                _LOGGER.debug("get register: %s = %s", register, self._attributes[register])
                 await asyncio.sleep(DEFAULT_COOLDOWN_INTERVAL)
             except (ReadException, ConnectionException) as ex:
                 _LOGGER.error("could not get register '%s': %s", register, ex)
@@ -459,7 +466,7 @@ class HuaweiSolarEntitySensor(Entity):
         self._register = register
         if name_prefix:
             self._name = (
-                name_prefix + "_" + self._parent_sensor._attributes[ATTR_SERIAL_NUMBER]
+                name_prefix # + "_" + self._parent_sensor._attributes[ATTR_SERIAL_NUMBER]
             )
         else:
             self._name = (
