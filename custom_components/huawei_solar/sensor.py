@@ -13,12 +13,6 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import (
     CONF_HOST,
-    DEVICE_CLASS_CURRENT,
-    DEVICE_CLASS_ENERGY,
-    DEVICE_CLASS_POWER,
-    DEVICE_CLASS_VOLTAGE,
-    ENERGY_KILO_WATT_HOUR,
-    POWER_WATT,
     UnitOfEnergy,
 )
 from homeassistant.helpers.entity import Entity
@@ -219,9 +213,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         huawei_solar_sensor,
         HuaweiSolarDailyYieldSensor(
             inverter=inverter,
-            unit=ENERGY_KILO_WATT_HOUR,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
             icon="mdi:solar-power",
-            device_class=DEVICE_CLASS_ENERGY,
+            device_class=SensorDeviceClass.ENERGY,
             parent_sensor=huawei_solar_sensor,
             register=ATTR_DAILY_YIELD,
             name_prefix=static_attributes["model_name"] + "_daily_yield",
@@ -229,27 +223,27 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         ),
         HuaweiSolarEntitySensor(
             inverter=inverter,
-            unit=ENERGY_KILO_WATT_HOUR,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
             icon="mdi:solar-power",
-            device_class=DEVICE_CLASS_ENERGY,
+            device_class=SensorDeviceClass.ENERGY,
             parent_sensor=huawei_solar_sensor,
             register=ATTR_ACCUMULATED_YIELD,
             name_prefix=static_attributes["model_name"] +"_total_yield",
         ),
         HuaweiSolarEntitySensor(
             inverter=inverter,
-            unit=ENERGY_KILO_WATT_HOUR,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
             icon="mdi:solar-power",
-            device_class=DEVICE_CLASS_ENERGY,
+            device_class=SensorDeviceClass.ENERGY,
             parent_sensor=huawei_solar_sensor,
             register=ATTR_GRID_EXPORTED,
             name_prefix=static_attributes["model_name"] + "_grid_exported",
         ),
         HuaweiSolarEntitySensor(
             inverter=inverter,
-            unit=ENERGY_KILO_WATT_HOUR,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
             icon="mdi:solar-power",
-            device_class=DEVICE_CLASS_ENERGY,
+            device_class=SensorDeviceClass.ENERGY,
             parent_sensor=huawei_solar_sensor,
             register=ATTR_GRID_ACCUMULATED,
             name_prefix=static_attributes["model_name"] + "_grid_accumulated",
@@ -261,25 +255,25 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             [
                 HuaweiSolarEntitySensor(
                     inverter=inverter,
-                    unit=POWER_WATT,
+                    unit=UnitOfPower.WATT,
                     icon="mdi:solar-power",
-                    device_class=DEVICE_CLASS_POWER,
+                    device_class=SensorDeviceClass.POWER,
                     parent_sensor=huawei_solar_sensor,
                     register=ATTR_STORAGE_CHARGE_DISCHARGE_POWER,
                 ),
                 HuaweiSolarEntitySensor(
                     inverter=inverter,
-                    unit=ENERGY_KILO_WATT_HOUR,
+                    unit=UnitOfEnergy.KILO_WATT_HOUR,
                     icon="mdi:solar-power",
-                    device_class=DEVICE_CLASS_ENERGY,
+                    device_class=SensorDeviceClass.ENERGY,
                     parent_sensor=huawei_solar_sensor,
                     register=ATTR_STORAGE_TOTAL_CHARGE,
                 ),
                 HuaweiSolarEntitySensor(
                     inverter=inverter,
-                    unit=ENERGY_KILO_WATT_HOUR,
+                    unit=UnitOfEnergy.KILO_WATT_HOUR,
                     icon="mdi:solar-power",
-                    device_class=DEVICE_CLASS_ENERGY,
+                    device_class=SensorDeviceClass.ENERGY,
                     parent_sensor=huawei_solar_sensor,
                     register=ATTR_STORAGE_TOTAL_DISCHARGE,
                 ),
@@ -298,7 +292,7 @@ class HuaweiSolarSensor(Entity):
         self._optimizers_installed = optimizers_installed
         self._battery_installed = battery_installed
         self._hidden = False
-        self._unit = POWER_WATT
+        self._unit = UnitOfPower.WATT
         self._icon = "mdi:solar-power"
         self._available = False
         self._state = None
@@ -335,7 +329,7 @@ class HuaweiSolarSensor(Entity):
 
     @property
     def device_class(self):
-        return DEVICE_CLASS_POWER
+        return SensorDeviceClass.POWER
 
     @property
     def extra_state_attributes(self):
