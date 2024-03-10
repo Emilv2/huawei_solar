@@ -1,7 +1,7 @@
 {
   "domain": "huawei_solar",
   "name": "huawei_solar",
-  "documentation": "https://github.com/titidnh/huawei_solar",
+  "documentation": "https://github.com/Emilv2/huawei_solar",
   "dependencies": [],
   "codeowners": ["Emilv2"],
   "requirements": ["huawei-solar>=2.0.0,<=2.2.9"],
