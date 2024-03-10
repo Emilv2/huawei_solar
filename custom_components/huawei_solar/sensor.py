@@ -10,6 +10,8 @@ from homeassistant.components.sensor import (
     PLATFORM_SCHEMA,
     STATE_CLASS_MEASUREMENT,
     STATE_CLASS_TOTAL_INCREASING,
+    SensorStateClass,
+    SensorDeviceClass,
 )
 from homeassistant.const import (
     CONF_HOST,
@@ -19,6 +21,7 @@ from homeassistant.const import (
     DEVICE_CLASS_VOLTAGE,
     ENERGY_KILO_WATT_HOUR,
     POWER_WATT,
+    UnitOfEnergy,
 )
 from homeassistant.helpers.entity import Entity
 from homeassistant.util.dt import utc_from_timestamp
@@ -224,7 +227,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             parent_sensor=huawei_solar_sensor,
             register=ATTR_DAILY_YIELD,
             name_prefix=static_attributes["model_name"] + "_daily_yield",
-            state_class=STATE_CLASS_MEASUREMENT,
+            state_class=SensorStateClass.MEASUREMENT,
         ),
         HuaweiSolarEntitySensor(
             inverter=inverter,
@@ -455,7 +458,7 @@ class HuaweiSolarEntitySensor(Entity):
         parent_sensor,
         register,
         name_prefix=None,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL_INCREASING,
     ):
         self._inverter = inverter
         self._hidden = False
